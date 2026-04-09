@@ -75,3 +75,146 @@ Returned when:
 
 Capacity check fails due to inconsistent data (mainly Prisma stage)
 
+Shrabin Bajracharay - Features 12 and 14
+
+
+Feature 14 — Save for Later
+
+Method signature:
+toggleSaveEvent(userId: string, eventId: string): Promise<Result<ToggleSaveResult, SaveEventError>>
+
+Parameters:
+userId: string
+eventId: string
+
+Success:
+type ToggleSaveResult = {
+status: "saved" | "unsaved";
+eventId: string;
+};
+
+{
+ok: true,
+value: ToggleSaveResult
+}
+
+Errors:
+
+type SaveEventError =
+| EventNotFoundError
+| UserNotFoundError
+| UnauthorizedError
+| EventCancelledError;
+
+
+getSavedEvents(userId: string): Promise<Result<SavedEvent[], SaveEventError>>
+
+Parameters:
+userId: string
+
+Success:
+type SavedEvent = {
+eventId: string;
+title: string;
+date: string;
+location: string;
+};
+
+{
+ok: true,
+value: SavedEvent[]
+}
+
+Errors:
+
+UserNotFoundError — User does not exist
+UnauthorizedError — Only members have saved events
+
+Method signature:
+isEventSaved(userId: string, eventId: string): Promise<Result<boolean, SaveEventError>>
+
+Parameters:
+userId: string
+eventId: string
+
+Success:
+{
+ok: true,
+value: boolean
+}
+
+true → event is saved
+false → event is not saved
+
+Errors:
+
+UserNotFoundError — User does not exist
+EventNotFoundError — Event does not exist
+
+
+
+Feature 12 — Attendee List (Organizer)
+
+Method signature:
+getAttendeeList(eventId: string, requesterId: string): Promise<Result<AttendeeList, AttendeeListError>>
+
+Parameters:
+eventId: string
+requesterId: string
+
+Success:
+type Attendee = {
+userId: string;
+displayName: string;
+rsvpTime: Date;
+};
+
+type AttendeeList = {
+attending: Attendee[];
+waitlisted: Attendee[];
+cancelled: Attendee[];
+};
+
+{
+ok: true,
+value: AttendeeList
+}
+
+Errors:
+
+type AttendeeListError =
+| EventNotFoundError
+| UserNotFoundError
+| UnauthorizedError;
+
+
+canViewAttendeeList(eventId: string, requesterId: string): Promise<Result<boolean, AccessError>>
+
+Parameters:
+eventId: string
+requesterId: string
+
+Success:
+{
+ok: true,
+value: boolean
+}
+
+true → requester is organizer or admin
+false → requester is not allowed
+
+Errors:
+
+type AccessError =
+| EventNotFoundError
+| UserNotFoundError;
+
+EventNotFoundError
+
+Returned when:
+Event does not exist
+
+UserNotFoundError
+
+Returned when:
+Requester does not exist
