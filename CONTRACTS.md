@@ -218,3 +218,53 @@ UserNotFoundError
 
 Returned when:
 Requester does not exist
+
+
+Nithi Vankineni - Feature 2 and 5
+
+Feature 2 — Event Detail Page
+
+Method signature: getEvent(eventId: string, requesterId: string): Promise<Result<Event, EventError>>
+Parameters: eventId: string requesterId: string
+
+Success:
+type Event = {
+  title: string;
+  description: string;
+  location: string;
+  category: string;
+  dateTime: Date;
+  organizerName: string;
+  attendeeCount: number;
+  capacity: number;
+  status: "draft" | "published" | "cancelled";
+};
+{ ok: true, value: Event }
+Rendered controls vary by role: organizers and admins see edit and cancel buttons; members see the RSVP button.
+
+Errors:
+type EventError = | EventNotFoundError;
+EventNotFoundError
+Returned when: Event does not exist — or when the requester is not permitted to see it. Draft events are only visible to the organizer who created them and to admins; all other users receive a not-found response.
+
+Feature 5 — Event Publishing and Cancellation
+
+Method signature: publishEvent(eventId: string, requesterId: string): Promise<Result<Event, TransitionError>>
+Method signature: cancelEvent(eventId: string, requesterId: string): Promise<Result<Event, TransitionError>>
+
+Parameters: eventId: string requesterId: string
+
+Success:
+type Event = {
+  id: string;
+  status: "published" | "cancelled";
+};
+{ ok: true, value: Event }
+The status badge and action controls update inline via HTMX without a full page reload.
+
+Errors:
+type TransitionError = | InvalidStateTransitionError | UnauthorizedError;
+InvalidStateTransitionError
+Returned when: The requested transition is not valid — publishing an already-published event, or attempting to restore a cancelled event.
+UnauthorizedError
+Returned when: The requester does not have permission. Organizers may only publish or cancel their own events. Admins may cancel any event. Members cannot perform either action.
