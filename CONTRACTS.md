@@ -75,7 +75,7 @@ Returned when:
 
 Capacity check fails due to inconsistent data (mainly Prisma stage)
 
-Shrabin Bajracharay - Features 12 and 14
+Shrabin Bajracharya - Features 12 and 14
 
 
 Feature 14 — Save for Later
