@@ -267,4 +267,4 @@ type TransitionError = | InvalidStateTransitionError | UnauthorizedError;
 InvalidStateTransitionError
 Returned when: The requested transition is not valid — publishing an already-published event, or attempting to restore a cancelled event.
 UnauthorizedError
-Returned when: The requester does not have permission. Organizers may only publish or cancel their own events. Admins may cancel any event. Members cannot perform either action.
+Returned when: The requester does not have permission. Organizers may only publish or cancel their own events. Admins may cancel any event. Members cannot perform either action
