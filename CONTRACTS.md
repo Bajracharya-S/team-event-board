@@ -73,7 +73,6 @@ CapacityCalculationError
 
 Returned when:
 
-
 Capacity check fails due to inconsistent data (mainly Prisma stage)
 
 Shrabin Bajracharya - Features 12 and 14
