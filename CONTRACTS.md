@@ -268,3 +268,68 @@ InvalidStateTransitionError
 Returned when: The requested transition is not valid — publishing an already-published event, or attempting to restore a cancelled event.
 UnauthorizedError
 Returned when: The requester does not have permission. Organizers may only publish or cancel their own events. Admins may cancel any event. Members cannot perform either action
+
+Mishti Gala - Features 6 and 10
+
+Feature 6 — Category and Date Filter  
+Feature 10 — Event Search  
+
+Method signature:
+listPublishedUpcomingEvents(filters: EventSearchFilters): Promise<Result<EventListItem[], InvalidFilterError>>
+
+Parameters:
+type EventSearchFilters = {
+  query: string;
+  category: string;
+  timeframe: string;
+};
+
+type EventListItem = {
+  id: string;
+  title: string;
+  description: string;
+  location: string;
+  category: string;
+  startDatetime: Date;
+  endDatetime: Date;
+};
+
+Success:
+{
+  ok: true,
+  value: EventListItem[] // list of published upcoming events matching filters
+}
+
+Rules:
+- Only events with status "published" are returned
+- Only upcoming events (events with startDatetime in the future) are returned
+- If query is empty → return all published upcoming events
+- Search matches:
+  - title
+  - description
+  - location
+- If category = "all" → no category filtering
+- If timeframe = "all" → no timeframe filtering
+- Results are sorted by startDatetime (ascending)
+
+Allowed category values:
+- all
+- academic
+- career
+- social
+- sports
+- music
+- workshop
+
+Allowed timeframe values:
+- all
+- week
+- weekend
+
+Errors:
+InvalidFilterError
+
+Returned when:
+- category is not valid
+- timeframe is not valid
+
