@@ -331,5 +331,5 @@ InvalidFilterError
 
 Returned when:
 - category is not valid
-- timeframe is not valid
+- timeframe is not valid.
 
