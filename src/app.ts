@@ -3,6 +3,8 @@ import express, { Request, RequestHandler, Response } from "express";
 import session from "express-session";
 import Layouts from "express-ejs-layouts";
 import { IAuthController } from "./auth/AuthController";
+import { ISaveController } from "./saveForLater/saveController";
+
 import {
   AuthenticationRequired,
   AuthorizationRequired,
@@ -236,6 +238,28 @@ class ExpressApp implements IApp {
         );
       }),
     );
+
+    this.app.post(
+      "/entries/:id/saveToggle",
+      asyncHandler(async (req, res) => {
+        if (!this.requireAuthenticated(req, res)) {
+          return;
+        }
+
+        const session = touchAppSession(sessionStore(req));
+        const id = Number(req.params.id);
+        if (!Number.isInteger(id) || id <= 0) {
+          res.status(400).render("entries/partials/error", {
+            message: "Invalid ID.",
+            layout: false,
+          });
+          return;
+        }
+
+        await this.authController.toggleSaveEvent(res, id, session);
+      }),
+    );
+
 
     // ── Authenticated home page ──────────────────────────────────────
     // TODO: Replace this placeholder with your project's main page.
