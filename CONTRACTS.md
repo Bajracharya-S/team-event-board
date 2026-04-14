@@ -268,3 +268,153 @@ InvalidStateTransitionError
 Returned when: The requested transition is not valid — publishing an already-published event, or attempting to restore a cancelled event.
 UnauthorizedError
 Returned when: The requester does not have permission. Organizers may only publish or cancel their own events. Admins may cancel any event. Members cannot perform either action
+
+# Mai Long Vuong - features 11 and 13
+
+# Feature 11 — Past Event Archiving
+
+Method signature:
+archiveExpiredEvents(now: Date): Promise<Result<ArchiveResult>>
+
+Parameters:
+now: Date
+
+Success:
+type ArchiveResult = {
+  archivedCount: number;
+  archivedEventIds: string[];
+};
+
+- All events where:
+  - status === "published"
+  - endTime < now
+- are updated to:
+  - status = "past"
+
+Errors:
+
+InvalidNowError
+
+Returned when:
+- now is missing or not a valid Date
+
+---
+
+Method signature:
+getArchivedEvents(userId: string, category?: string): Promise<Result<Event[]>>
+
+Parameters:
+userId: string
+category?: string
+
+Success:
+Event[] // only events with status = "past", sorted by endTime DESC
+- Only authenticated users can access
+- If category provided → filter by category
+
+Errors:
+
+UnauthorizedError
+
+Returned when:
+- User is not authenticated
+
+InvalidCategoryError
+
+Returned when:
+- Category value is invalid
+
+---
+
+# Feature 13 — Event Comments
+
+Method signature:
+createComment(eventId: string, userId: string, content: string): Promise<Result<Comment>>
+
+Parameters:
+eventId: string
+userId: string
+content: string
+
+Success:
+type Comment = {
+  id: string;
+  eventId: string;
+  authorId: string;
+  content: string;
+  createdAt: Date;
+};
+
+- Comment is created and returned
+
+Errors:
+
+EventNotFoundError
+
+Returned when:
+- Event does not exist
+
+EventNotPublishedError
+
+Returned when:
+- Event is not in "published" status
+
+UnauthorizedError
+
+Returned when:
+- User is not authenticated
+
+InvalidContentError
+
+Returned when:
+- Content is empty or only whitespace
+- Content exceeds max length
+
+---
+
+Method signature:
+getComments(eventId: string): Promise<Result<Comment[]>>
+
+Parameters:
+eventId: string
+
+Success:
+Comment[] // sorted by createdAt ASC
+
+Errors:
+
+EventNotFoundError
+
+Returned when:
+- Event does not exist
+
+EventNotPublishedError
+
+Returned when:
+- Event is not published
+
+---
+
+Method signature:
+deleteComment(commentId: string, userId: string): Promise<Result<string>>
+
+Parameters:
+commentId: string
+userId: string
+
+Success:
+string // deleted commentId
+
+Errors:
+CommentNotFoundError
+
+Returned when:
+- Comment does not exist
+
+UnauthorizedError
+
+Returned when:
+- User is not:
+  - comment author
+  - OR event organizer
+  - OR admin
