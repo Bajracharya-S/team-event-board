@@ -2,7 +2,7 @@ import type { Request, Response } from "express";
 import type { IArchiveService } from "./ArchiveService";
 import type { ILoggingService } from "../service/LoggingService";
 import { VALID_CATEGORIES } from "./ArchiveService";
-import { getAuthenticatedUser } from "../session/AppSession";
+import { getAuthenticatedUser, recordPageView } from "../session/AppSession";
 import type { AppSessionStore } from "../session/AppSession";
 
 export interface IArchiveController {
@@ -17,6 +17,7 @@ class ArchiveController implements IArchiveController {
 
   async showArchive(req: Request, res: Response): Promise<void> {
     const store = req.session as AppSessionStore;
+    const browserSession = recordPageView(store);
     const user = getAuthenticatedUser(store);
     const userId = user?.userId ?? "";
 
@@ -62,6 +63,7 @@ class ArchiveController implements IArchiveController {
       events: eventsResult.value,
       selectedCategory: category ?? "",
       validCategories: VALID_CATEGORIES,
+      session: browserSession,
     });
   }
 }
