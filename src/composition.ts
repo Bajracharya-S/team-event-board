@@ -5,11 +5,18 @@ import { CreateInMemoryUserRepository } from "./auth/InMemoryUserRepository";
 import { CreatePasswordHasher } from "./auth/PasswordHasher";
 import { CreateApp } from "./app";
 import type { IApp } from "./contracts";
+import { CreateInMemoryEventRepository } from "./event/InMemoryEventRepository";
+import type { IEventRepository } from "./event/EventRepository";
 import { CreateLoggingService } from "./service/LoggingService";
 import type { ILoggingService } from "./service/LoggingService";
 
+export let eventRepo: IEventRepository;
+
 export function createComposedApp(logger?: ILoggingService): IApp {
   const resolvedLogger = logger ?? CreateLoggingService();
+
+  // Event repository (shared across features)
+  eventRepo = CreateInMemoryEventRepository();
 
   // Authentication & authorization wiring
   const authUsers = CreateInMemoryUserRepository();
