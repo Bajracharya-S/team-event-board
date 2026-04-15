@@ -3,6 +3,7 @@ import express, { Request, RequestHandler, Response } from "express";
 import session from "express-session";
 import Layouts from "express-ejs-layouts";
 import { IAuthController } from "./auth/AuthController";
+import { IArchiveController } from "./archive/ArchiveController";
 import {
   AuthenticationRequired,
   AuthorizationRequired,
@@ -35,6 +36,7 @@ class ExpressApp implements IApp {
 
   constructor(
     private readonly authController: IAuthController,
+    private readonly archiveController: IArchiveController,
     private readonly logger: ILoggingService,
   ) {
     this.app = express();
@@ -237,6 +239,18 @@ class ExpressApp implements IApp {
       }),
     );
 
+    // ── Archive (FT11) ───────────────────────────────────────────────
+
+    this.app.get(
+      "/archive",
+      asyncHandler(async (req, res) => {
+        if (!this.requireAuthenticated(req, res)) {
+          return;
+        }
+        await this.archiveController.showArchive(req, res);
+      }),
+    );
+
     // ── Authenticated home page ──────────────────────────────────────
     // TODO: Replace this placeholder with your project's main page.
 
@@ -272,7 +286,8 @@ class ExpressApp implements IApp {
 
 export function CreateApp(
   authController: IAuthController,
+  archiveController: IArchiveController,
   logger: ILoggingService,
 ): IApp {
-  return new ExpressApp(authController, logger);
+  return new ExpressApp(authController, archiveController, logger);
 }
