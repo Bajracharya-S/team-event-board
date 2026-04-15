@@ -37,6 +37,7 @@ class ExpressApp implements IApp {
 
   constructor(
     private readonly authController: IAuthController,
+    private readonly saveController: ISaveController,
     private readonly logger: ILoggingService,
   ) {
     this.app = express();
@@ -240,11 +241,13 @@ class ExpressApp implements IApp {
     );
 
     this.app.post(
-      "/entries/:id/saveToggle",
+      "/events/:id/saveToggle",
       asyncHandler(async (req, res) => {
         if (!this.requireAuthenticated(req, res)) {
           return;
         }
+
+        //make it so that only user can access it
 
         const session = touchAppSession(sessionStore(req));
         const id = Number(req.params.id);
@@ -256,7 +259,7 @@ class ExpressApp implements IApp {
           return;
         }
 
-        await this.authController.toggleSaveEvent(res, id, session);
+        await this.saveController.toggleSaveEvent(res, id, session);
       }),
     );
 
@@ -296,7 +299,8 @@ class ExpressApp implements IApp {
 
 export function CreateApp(
   authController: IAuthController,
+  saveController: ISaveController,
   logger: ILoggingService,
 ): IApp {
-  return new ExpressApp(authController, logger);
+  return new ExpressApp(authController, saveController, logger);
 }
