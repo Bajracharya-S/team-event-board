@@ -4,6 +4,7 @@ import session from "express-session";
 import Layouts from "express-ejs-layouts";
 import { IAuthController } from "./auth/AuthController";
 import { IArchiveController } from "./archive/ArchiveController";
+import { ICommentController } from "./comment/CommentController";
 import {
   AuthenticationRequired,
   AuthorizationRequired,
@@ -37,6 +38,7 @@ class ExpressApp implements IApp {
   constructor(
     private readonly authController: IAuthController,
     private readonly archiveController: IArchiveController,
+    private readonly commentController: ICommentController,
     private readonly logger: ILoggingService,
   ) {
     this.app = express();
@@ -251,6 +253,28 @@ class ExpressApp implements IApp {
       }),
     );
 
+    // ── Comments (FT13) ─────────────────────────────────────────────
+
+    this.app.post(
+      "/events/:eventId/comments",
+      asyncHandler(async (req, res) => {
+        if (!this.requireAuthenticated(req, res)) {
+          return;
+        }
+        await this.commentController.postComment(req, res);
+      }),
+    );
+
+    this.app.post(
+      "/comments/:commentId/delete",
+      asyncHandler(async (req, res) => {
+        if (!this.requireAuthenticated(req, res)) {
+          return;
+        }
+        await this.commentController.deleteComment(req, res);
+      }),
+    );
+
     // ── Authenticated home page ──────────────────────────────────────
     // TODO: Replace this placeholder with your project's main page.
 
@@ -287,7 +311,8 @@ class ExpressApp implements IApp {
 export function CreateApp(
   authController: IAuthController,
   archiveController: IArchiveController,
+  commentController: ICommentController,
   logger: ILoggingService,
 ): IApp {
-  return new ExpressApp(authController, archiveController, logger);
+  return new ExpressApp(authController, archiveController, commentController, logger);
 }
