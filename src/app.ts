@@ -247,7 +247,9 @@ class ExpressApp implements IApp {
           return;
         }
 
-        //make it so that only user can access it
+        if (!this.requireRole(req, res, ["user"], "Only users can save events.")) {
+          return;                           
+        }
 
         const session = touchAppSession(sessionStore(req));
         const id = Number(req.params.id);
