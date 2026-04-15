@@ -22,4 +22,12 @@ export class InMemoryEventRepository implements IEventRepository {
     async findAll(): Promise<Event[]> {
         return this.events;
     }
+
+    async update(event: Event): Promise<Event> {
+        const index = this.events.findIndex(e => e.id === event.id);
+        if(index !== -1) {
+            this.events[index] = event;
+        }
+        return event;
+    }
 }
