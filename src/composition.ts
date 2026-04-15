@@ -9,6 +9,9 @@ import { CreateInMemoryEventRepository } from "./event/InMemoryEventRepository";
 import type { IEventRepository } from "./event/EventRepository";
 import { CreateArchiveService } from "./archive/ArchiveService";
 import { CreateArchiveController } from "./archive/ArchiveController";
+import { CreateInMemoryCommentRepository } from "./comment/InMemoryCommentRepository";
+import { CreateCommentService } from "./comment/CommentService";
+import { CreateCommentController } from "./comment/CommentController";
 import { CreateLoggingService } from "./service/LoggingService";
 import type { ILoggingService } from "./service/LoggingService";
 
@@ -24,6 +27,11 @@ export function createComposedApp(logger?: ILoggingService): IApp {
   const archiveService = CreateArchiveService(eventRepo);
   const archiveController = CreateArchiveController(archiveService, resolvedLogger);
 
+  // Comments
+  const commentRepo = CreateInMemoryCommentRepository();
+  const commentService = CreateCommentService(commentRepo, eventRepo);
+  const commentController = CreateCommentController(commentService, resolvedLogger);
+
   // Authentication & authorization wiring
   const authUsers = CreateInMemoryUserRepository();
   const passwordHasher = CreatePasswordHasher();
@@ -31,5 +39,5 @@ export function createComposedApp(logger?: ILoggingService): IApp {
   const adminUserService = CreateAdminUserService(authUsers, passwordHasher);
   const authController = CreateAuthController(authService, adminUserService, resolvedLogger);
 
-  return CreateApp(authController, archiveController, resolvedLogger);
+  return CreateApp(authController, archiveController, commentController, resolvedLogger);
 }
