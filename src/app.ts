@@ -243,6 +243,9 @@ class ExpressApp implements IApp {
   this.app.get(
     "/events/:id/attendees",
     asyncHandler(async (req, res) => {
+      if (!this.requireRole(req, res, ["admin"], "Only admins can view attendees.")) {
+        return;
+      }
       const browserSession = recordPageView(sessionStore(req));
       const id = Number(req.params.id);
       if (!Number.isInteger(id) || id <= 0) {
@@ -292,5 +295,5 @@ export function CreateApp(
   attendeeController: IAttendeeController,
   logger: ILoggingService,
 ): IApp {
-  return new ExpressApp(authController, attendeeController logger);
+  return new ExpressApp(authController, attendeeController, logger);
 }
