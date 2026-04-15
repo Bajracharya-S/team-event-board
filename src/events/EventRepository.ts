@@ -14,4 +14,12 @@ export class InMemoryEventRepository implements IEventRepository {
       this.events.push(event);
       return event;
     }
+
+    async findById(id: string): Promise<Event | null> {
+        return this.events.find(e => e.id === id) ?? null;
+    }
+
+    async findAll(): Promise<Event[]> {
+        return this.events;
+    }
 }
