@@ -12,6 +12,8 @@ import { CreateArchiveController } from "./archive/ArchiveController";
 import { CreateInMemoryCommentRepository } from "./comment/InMemoryCommentRepository";
 import { CreateCommentService } from "./comment/CommentService";
 import { CreateCommentController } from "./comment/CommentController";
+import { CreateEventCreationService } from "./event-creation/EventCreationService";
+import { CreateEventCreationController } from "./event-creation/EventCreationController";
 import { CreateLoggingService } from "./service/LoggingService";
 import type { ILoggingService } from "./service/LoggingService";
 
@@ -39,5 +41,9 @@ export function createComposedApp(logger?: ILoggingService): IApp {
   const adminUserService = CreateAdminUserService(authUsers, passwordHasher);
   const authController = CreateAuthController(authService, adminUserService, resolvedLogger);
 
-  return CreateApp(authController, archiveController, commentController, resolvedLogger);
+  // Event Creation (FT1)
+  const eventCreationService = CreateEventCreationService(eventRepo);
+  const eventCreationController = CreateEventCreationController(eventCreationService, resolvedLogger);
+
+  return CreateApp(authController, archiveController, commentController, eventCreationController, resolvedLogger);
 }
