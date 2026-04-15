@@ -8,6 +8,10 @@ import type { IApp } from "./contracts";
 import { CreateLoggingService } from "./service/LoggingService";
 import type { ILoggingService } from "./service/LoggingService";
 
+import { InMemorySavedEventRepository } from "./saveForLater/SaveRepo";
+import { CreateSaveService } from "./saveForLater/SaveService";
+import { CreateSaveController } from "./saveForLater/SaveController";
+
 export function createComposedApp(logger?: ILoggingService): IApp {
   const resolvedLogger = logger ?? CreateLoggingService();
 
@@ -18,5 +22,11 @@ export function createComposedApp(logger?: ILoggingService): IApp {
   const adminUserService = CreateAdminUserService(authUsers, passwordHasher);
   const authController = CreateAuthController(authService, adminUserService, resolvedLogger);
 
-  return CreateApp(authController, resolvedLogger);
+  const savedEventRepo = new InMemorySavedEventRepository();
+  const saveService = CreateSaveService(savedEventRepo);
+  const saveController = CreateSaveController(saveService, resolvedLogger);
+
+  
+
+  return CreateApp(authController, saveController, resolvedLogger);
 }
