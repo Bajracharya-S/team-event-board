@@ -62,11 +62,9 @@ class EventCreationController implements IEventCreationController {
 
     const result = await this.service.createEvent(input, user.userId, user.role);
 
-    if (!result.ok) {
+    if (result.ok === false) {
       const error = result.value;
-      const status =
-        error.name === "UnauthorizedError" ? 403 :
-        error.name === "InvalidTimeRangeError" ? 400 : 400;
+      const status = error.name === "UnauthorizedError" ? 403 : 400;
 
       const session = recordPageView(store);
       res.status(status).render("events/new", {
