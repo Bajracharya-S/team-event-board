@@ -14,7 +14,6 @@ interface RsvpRecord {
 
 
 export const rsvpStore = new Map<number, RsvpRecord>()
-
 export const userDisplayNames = new Map<string, string>()
 
 export class InMemoryAttendeeRepository implements IAttendeeRepository {
