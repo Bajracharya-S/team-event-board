@@ -3,6 +3,7 @@ import express, { Request, RequestHandler, Response } from "express";
 import session from "express-session";
 import Layouts from "express-ejs-layouts";
 import { IAuthController } from "./auth/AuthController";
+import { IAttendeeController} from "./attendee-list/AttendeeController"
 import {
   AuthenticationRequired,
   AuthorizationRequired,
@@ -17,6 +18,7 @@ import {
   touchAppSession,
 } from "./session/AppSession";
 import { ILoggingService } from "./service/LoggingService";
+
 
 type AsyncRequestHandler = RequestHandler;
 
@@ -35,6 +37,7 @@ class ExpressApp implements IApp {
 
   constructor(
     private readonly authController: IAuthController,
+    private readonly attendeeController: IAttendeeController,
     private readonly logger: ILoggingService,
   ) {
     this.app = express();
@@ -237,6 +240,20 @@ class ExpressApp implements IApp {
       }),
     );
 
+  this.app.get(
+    "/events/:id/attendees",
+    asyncHandler(async (req, res) => {
+      const browserSession = recordPageView(sessionStore(req));
+      const id = Number(req.params.id);
+      if (!Number.isInteger(id) || id <= 0) {
+        res.status(400).render("partials/error", { message: "Invalid ID.", layout: false });
+        return;
+      }
+
+      await this.attendeeController.showAttendees(res, id, browserSession);
+    }),
+);
+
     // ── Authenticated home page ──────────────────────────────────────
     // TODO: Replace this placeholder with your project's main page.
 
@@ -272,7 +289,8 @@ class ExpressApp implements IApp {
 
 export function CreateApp(
   authController: IAuthController,
+  attendeeController: IAttendeeController,
   logger: ILoggingService,
 ): IApp {
-  return new ExpressApp(authController, logger);
+  return new ExpressApp(authController, attendeeController logger);
 }
