@@ -7,6 +7,7 @@ import { IArchiveController } from "./archive/ArchiveController";
 import { ICommentController } from "./comment/CommentController";
 import { IEventCreationController } from "./event-creation/EventCreationController";
 import { IRSVPController } from "./rsvp/RSVPController";
+import { IAttendeeController} from "./attendee-list/AttendeeController"
 import {
   AuthenticationRequired,
   AuthorizationRequired,
@@ -21,6 +22,7 @@ import {
   touchAppSession,
 } from "./session/AppSession";
 import { ILoggingService } from "./service/LoggingService";
+
 
 type AsyncRequestHandler = RequestHandler;
 
@@ -43,6 +45,7 @@ class ExpressApp implements IApp {
     private readonly commentController: ICommentController,
     private readonly eventCreationController: IEventCreationController,
     private readonly rsvpController: IRSVPController,
+    private readonly attendeeController: IAttendeeController,
     private readonly logger: ILoggingService,
   ) {
     this.app = express();
@@ -314,6 +317,22 @@ class ExpressApp implements IApp {
         await this.rsvpController.toggle(req, res);
       }),
     );
+  this.app.get(
+    "/events/:id/attendees",
+    asyncHandler(async (req, res) => {
+      if (!this.requireRole(req, res, ["admin"], "Only admins can view attendees.")) {
+        return;
+      }
+      const browserSession = recordPageView(sessionStore(req));
+      const id = Number(req.params.id);
+      if (!Number.isInteger(id) || id <= 0) {
+        res.status(400).render("partials/error", { message: "Invalid ID.", layout: false });
+        return;
+      }
+
+      await this.attendeeController.showAttendees(res, id, browserSession);
+    }),
+);
 
     // ── Authenticated home page ──────────────────────────────────────
     // TODO: Replace this placeholder with your project's main page.
@@ -350,11 +369,14 @@ class ExpressApp implements IApp {
 
 export function CreateApp(
   authController: IAuthController,
+
   archiveController: IArchiveController,
   commentController: ICommentController,
   eventCreationController: IEventCreationController,
   rsvpController: IRSVPController,
   logger: ILoggingService,
+  attendeeController: IAttendeeController,
 ): IApp {
-  return new ExpressApp(authController, archiveController, commentController, eventCreationController, rsvpController, logger);
+  return new ExpressApp(authController, archiveController, commentController, eventCreationController, rsvpController, attendeeController, logger);
+
 }
