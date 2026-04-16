@@ -25,7 +25,11 @@ import type { ILoggingService } from "./service/LoggingService";
 import { CreateEventService } from "./event/EventService";
 import type { IEventService } from "./event/EventService";
 
+
 export let eventRepo: IEventRepository;
+import { InMemorySavedEventRepository } from "./saveForLater/SaveRepo";
+import { CreateSaveService } from "./saveForLater/SaveService";
+import { CreateSaveController } from "./saveForLater/saveController";
 
 export function createComposedApp(logger?: ILoggingService): IApp {
   const resolvedLogger = logger ?? CreateLoggingService();
@@ -59,9 +63,14 @@ export function createComposedApp(logger?: ILoggingService): IApp {
   const rsvpService = CreateRSVPService(rsvpRepo, eventRepo);
   const rsvpController = CreateRSVPController(rsvpService, resolvedLogger);
 
+  const savedEventRepo = new InMemorySavedEventRepository();
+  const saveService = CreateSaveService(savedEventRepo);
+  const saveController = CreateSaveController(saveService, resolvedLogger);
+
+
   const attendeeRepo = new InMemoryAttendeeRepository(rsvpRepo)
   const attendeeService = CreateAttendeeService(attendeeRepo)
   const attendeeController = CreateAttendeeController(attendeeService, resolvedLogger)
 
-  return CreateApp(authController, archiveController, commentController, eventCreationController, rsvpController, resolvedLogger, eventService, authUsers, attendeeController);}
+  return CreateApp(authController, archiveController, commentController, eventCreationController, rsvpController, saveController, resolvedLogger, eventService, authUsers, attendeeController);}
 

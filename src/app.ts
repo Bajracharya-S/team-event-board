@@ -7,7 +7,9 @@ import { IArchiveController } from "./archive/ArchiveController";
 import { ICommentController } from "./comment/CommentController";
 import { IEventCreationController } from "./event-creation/EventCreationController";
 import { IRSVPController } from "./rsvp/RSVPController";
+import { ISaveController } from "./saveForLater/saveController";
 import { IAttendeeController} from "./attendee-list/AttendeeController"
+
 import {
   AuthenticationRequired,
   AuthorizationRequired,
@@ -51,7 +53,11 @@ class ExpressApp implements IApp {
     private readonly commentController: ICommentController,
     private readonly eventCreationController: IEventCreationController,
     private readonly rsvpController: IRSVPController,
+
+    private readonly saveController: ISaveController,
+
     private readonly attendeeController: IAttendeeController,
+
     private readonly logger: ILoggingService,
     private readonly eventService: IEventService,
     private readonly userRepository: IUserRepository,
@@ -262,6 +268,7 @@ class ExpressApp implements IApp {
 
     this.app.get(
       "/archive",
+
       asyncHandler(async (req, res) => {
         if (!this.requireAuthenticated(req, res)) {
           return;
@@ -289,9 +296,29 @@ class ExpressApp implements IApp {
           return;
         }
         await this.commentController.deleteComment(req, res);
+  })
+);
+
+    this.app.post(
+      "/events/:id/saveToggle", asyncHandler(async (req, res) => {
+
+        if (!this.requireRole(req, res, ["user"], "Only users can save events.")) {
+          return;                           
+        }
+
+        const session = touchAppSession(sessionStore(req));
+        const id = Number(req.params.id);
+        if (!Number.isInteger(id) || id <= 0) {
+          res.status(400).render("entries/partials/error", {
+            message: "Invalid ID.",
+            layout: false,
+          });
+          return;
+        }
+
+        await this.saveController.toggleSaveEvent(res, id, session);
       }),
     );
-
 
     // Event Creation (FT1) -----------------------------------
 
@@ -471,11 +498,12 @@ export function CreateApp(
   commentController: ICommentController,
   eventCreationController: IEventCreationController,
   rsvpController: IRSVPController,
+  saveController: ISaveController,
   logger: ILoggingService,
   attendeeController: IAttendeeController,
   eventService: IEventService,
   userRepository: IUserRepository,
 
 ): IApp {
-  return new ExpressApp(authController, archiveController, commentController, eventCreationController, rsvpController, attendeeController, logger, eventService, userRepository);
+  return new ExpressApp(authController, archiveController, commentController, eventCreationController, rsvpController, attendeeController, saveController, logger, eventService, userRepository);
 }
