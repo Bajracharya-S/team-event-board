@@ -12,6 +12,9 @@ import { CreateArchiveController } from "./archive/ArchiveController";
 import { CreateInMemoryCommentRepository } from "./comment/InMemoryCommentRepository";
 import { CreateCommentService } from "./comment/CommentService";
 import { CreateCommentController } from "./comment/CommentController";
+import { CreateInMemoryRSVPRepository } from "./rsvp/InMemoryRSVPRepository";
+import { CreateRSVPService } from "./rsvp/RSVPService";
+import { CreateRSVPController } from "./rsvp/RSVPController";
 import { CreateEventCreationService } from "./event-creation/EventCreationService";
 import { CreateEventCreationController } from "./event-creation/EventCreationController";
 import { CreateLoggingService } from "./service/LoggingService";
@@ -44,6 +47,10 @@ export function createComposedApp(logger?: ILoggingService): IApp {
   // Ft(1) Event Creation
   const eventCreationService = CreateEventCreationService(eventRepo);
   const eventCreationController = CreateEventCreationController(eventCreationService, resolvedLogger);
+// Ft(4) RSVP
+  const rsvpRepo = CreateInMemoryRSVPRepository();
+  const rsvpService = CreateRSVPService(rsvpRepo, eventRepo);
+  const rsvpController = CreateRSVPController(rsvpService, resolvedLogger);
 
-  return CreateApp(authController, archiveController, commentController, eventCreationController, resolvedLogger);
+  return CreateApp(authController, archiveController, commentController, eventCreationController, rsvpController, resolvedLogger);
 }
