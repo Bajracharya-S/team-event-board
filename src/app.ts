@@ -364,14 +364,14 @@ class ExpressApp implements IApp {
         }
     
         const event = result.value;
+        const browserSession = recordPageView(sessionStore(req));
     
-        // Look up organizer display name
         const organizerResult = await this.userRepository.findById(event.organizerId);
         const organizerName = organizerResult.ok && organizerResult.value
           ? organizerResult.value.displayName
           : "Unknown";
     
-        res.render("eventDetail", { event, currentUser, organizerName, pageError: null });
+        res.render("eventDetail", { event, currentUser, organizerName, pageError: null, session: browserSession });
       }),
     );
     
