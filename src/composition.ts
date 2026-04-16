@@ -22,6 +22,8 @@ import {InMemoryAttendeeRepository} from "./attendee-list/AttendeeRepository"
 import {CreateAttendeeService} from "./attendee-list/AttendeeService"
 import {CreateAttendeeController} from "./attendee-list/AttendeeController"
 import type { ILoggingService } from "./service/LoggingService";
+import { CreateEventService } from "./event/EventService";
+import type { IEventService } from "./event/EventService";
 
 export let eventRepo: IEventRepository;
 
@@ -30,6 +32,8 @@ export function createComposedApp(logger?: ILoggingService): IApp {
 
   // Event repository (shared across features)
   eventRepo = CreateInMemoryEventRepository();
+  const eventService = CreateEventService(eventRepo);
+
 
   // Archive
   const archiveService = CreateArchiveService(eventRepo);
@@ -59,6 +63,5 @@ export function createComposedApp(logger?: ILoggingService): IApp {
   const attendeeService = CreateAttendeeService(attendeeRepo)
   const attendeeController = CreateAttendeeController(attendeeService, resolvedLogger)
 
+  return CreateApp(authController, archiveController, commentController, eventCreationController, rsvpController, resolvedLogger, eventService, authUsers, attendeeController);}
 
-  return CreateApp(authController, archiveController, commentController, eventCreationController, rsvpController,resolvedLogger, attendeeController);
-}
