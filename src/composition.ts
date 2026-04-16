@@ -68,9 +68,9 @@ export function createComposedApp(logger?: ILoggingService): IApp {
   const saveController = CreateSaveController(saveService, resolvedLogger);
 
 
-  const attendeeRepo = new InMemoryAttendeeRepository(rsvpRepo)
-  const attendeeService = CreateAttendeeService(attendeeRepo)
-  const attendeeController = CreateAttendeeController(attendeeService, resolvedLogger)
+const attendeeRepo = new InMemoryAttendeeRepository(rsvpRepo)
+const attendeeService = CreateAttendeeService(attendeeRepo, eventRepo)  // add eventRepo
+const attendeeController = CreateAttendeeController(attendeeService, resolvedLogger)
 
   return CreateApp(authController, archiveController, commentController, eventCreationController, rsvpController, saveController, resolvedLogger, attendeeController, eventService, authUsers);
 }
