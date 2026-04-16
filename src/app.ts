@@ -6,6 +6,7 @@ import { IAuthController } from "./auth/AuthController";
 import { IArchiveController } from "./archive/ArchiveController";
 import { ICommentController } from "./comment/CommentController";
 import { IEventCreationController } from "./event-creation/EventCreationController";
+import { IRSVPController } from "./rsvp/RSVPController";
 import {
   AuthenticationRequired,
   AuthorizationRequired,
@@ -45,6 +46,7 @@ class ExpressApp implements IApp {
     private readonly archiveController: IArchiveController,
     private readonly commentController: ICommentController,
     private readonly eventCreationController: IEventCreationController,
+    private readonly rsvpController: IRSVPController,
     private readonly logger: ILoggingService,
     private readonly eventService: IEventService,
 
@@ -306,6 +308,19 @@ class ExpressApp implements IApp {
       }),
     );
 
+
+    // -- RSVP Toggle (FT4)
+
+    this.app.post(
+      "/events/:eventId/rsvp",
+      asyncHandler(async (req, res) => {
+        if (!this.requireAuthenticated(req, res)) {
+          return;
+        }
+        await this.rsvpController.toggle(req, res);
+      }),
+    );
+
     // ── Authenticated home page ──────────────────────────────────────
     // TODO: Replace this placeholder with your project's main page.
 
@@ -424,8 +439,13 @@ export function CreateApp(
   archiveController: IArchiveController,
   commentController: ICommentController,
   eventCreationController: IEventCreationController,
+  rsvpController: IRSVPController,
   logger: ILoggingService,
   eventService: IEventService,
 ): IApp {
+<<<<<<< HEAD
   return new ExpressApp(authController, archiveController, commentController, eventCreationController, logger, eventService);
+=======
+  return new ExpressApp(authController, archiveController, commentController, eventCreationController, rsvpController, logger);
+>>>>>>> 0f0bc4cd77cba5e2e6f5f7218c32d87693885b73
 }
