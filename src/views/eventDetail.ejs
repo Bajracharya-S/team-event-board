@@ -1,0 +1,28 @@
+<h1><%= event.title %></h1>
+<p><strong>Status:</strong> <%= event.status %></p>
+<p><strong>Category:</strong> <%= event.category %></p>
+<p><strong>Location:</strong> <%= event.location %></p>
+<p><strong>Description:</strong> <%= event.description %></p>
+<p><strong>Start:</strong> <%= event.startDatetime.toLocaleString() %></p>
+<p><strong>End:</strong> <%= event.endDatetime.toLocaleString() %></p>
+<p><strong>Organizer:</strong> <%= organizerName %></p>
+<p><strong>Attending:</strong> 0 / <%= event.capacity ?? 'Unlimited' %></p>
+
+<% if (currentUser.role === 'admin' || event.organizerId === currentUser.userId) { %>
+  <% if (event.status === 'draft') { %>
+    <form method="POST" action="/events/<%= event.id %>/publish">
+      <button type="submit">Publish Event</button>
+    </form>
+  <% } %>
+  <% if (event.status === 'published') { %>
+    <form method="POST" action="/events/<%= event.id %>/cancel">
+      <button type="submit">Cancel Event</button>
+    </form>
+  <% } %>
+<% } else { %>
+  <button>RSVP</button>
+<% } %>
+
+<% if (pageError) { %>
+  <p style="color: red;"><%= pageError %></p>
+<% } %>

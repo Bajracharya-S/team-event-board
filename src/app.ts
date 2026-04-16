@@ -21,6 +21,12 @@ import {
   touchAppSession,
 } from "./session/AppSession";
 import { ILoggingService } from "./service/LoggingService";
+import type { IEventService } from "./event/EventService";
+import type { EventError } from "./event/errors";
+import type { IUserRepository } from "./auth/UserRepository";
+
+
+
 
 type AsyncRequestHandler = RequestHandler;
 
@@ -44,6 +50,10 @@ class ExpressApp implements IApp {
     private readonly eventCreationController: IEventCreationController,
     private readonly rsvpController: IRSVPController,
     private readonly logger: ILoggingService,
+    private readonly eventService: IEventService,
+    private readonly userRepository: IUserRepository,
+
+
   ) {
     this.app = express();
     this.registerMiddleware();
@@ -330,6 +340,94 @@ class ExpressApp implements IApp {
         res.render("home", { session: browserSession, pageError: null });
       }),
     );
+    
+    // ── Event Detail (FT2) & Publishing/Cancellation (FT5) ───────────
+
+    this.app.get(
+      "/events/:id",
+      asyncHandler(async (req, res) => {
+        if (!this.requireAuthenticated(req, res)) return;
+        const currentUser = getAuthenticatedUser(sessionStore(req));
+        if (!currentUser) return;
+    
+        const id = req.params.id as string;
+        const result = await this.eventService.getEventById(id, {
+          userId: currentUser.userId,
+          role: currentUser.role,
+        });
+    
+        if (!result.ok) {
+          const error = result.value as EventError;
+          const status = error.kind === "EventNotFound" ? 404 : 500;
+          res.status(status).render("partials/error", { message: error.message, layout: false });
+          return;
+        }
+    
+        const event = result.value;
+        const browserSession = recordPageView(sessionStore(req));
+    
+        const organizerResult = await this.userRepository.findById(event.organizerId);
+        const organizerName = organizerResult.ok && organizerResult.value
+          ? organizerResult.value.displayName
+          : "Unknown";
+    
+        res.render("eventDetail", { event, currentUser, organizerName, pageError: null, session: browserSession });
+      }),
+    );
+    
+    this.app.post(
+      "/events/:id/publish",
+      asyncHandler(async (req, res) => {
+        if (!this.requireAuthenticated(req, res)) return;
+        const currentUser = getAuthenticatedUser(sessionStore(req));
+        if (!currentUser) return;
+    
+        const id = req.params.id as string;
+        const result = await this.eventService.publishEvent(id, {
+          userId: currentUser.userId,
+          role: currentUser.role,
+        });
+    
+        if (!result.ok) {
+          const error = result.value as EventError;
+          const status = error.kind === "EventNotFound" ? 404
+            : error.kind === "Forbidden" ? 403
+            : error.kind === "InvalidTransition" ? 400
+            : 500;
+          res.status(status).render("partials/error", { message: error.message, layout: false });
+          return;
+        }
+    
+        res.redirect(`/events/${result.value.id}`);
+      }),
+    );
+    
+    this.app.post(
+      "/events/:id/cancel",
+      asyncHandler(async (req, res) => {
+        if (!this.requireAuthenticated(req, res)) return;
+        const currentUser = getAuthenticatedUser(sessionStore(req));
+        if (!currentUser) return;
+    
+        const id = req.params.id as string;
+        const result = await this.eventService.cancelEvent(id, {
+          userId: currentUser.userId,
+          role: currentUser.role,
+        });
+    
+        if (!result.ok) {
+          const error = result.value as EventError;
+          const status = error.kind === "EventNotFound" ? 404
+            : error.kind === "Forbidden" ? 403
+            : error.kind === "InvalidTransition" ? 400
+            : 500;
+          res.status(status).render("partials/error", { message: error.message, layout: false });
+          return;
+        }
+    
+        res.redirect(`/events/${result.value.id}`);
+      }),
+    );
 
     // ── Error handler ────────────────────────────────────────────────
 
@@ -355,6 +453,9 @@ export function CreateApp(
   eventCreationController: IEventCreationController,
   rsvpController: IRSVPController,
   logger: ILoggingService,
+  eventService: IEventService,
+  userRepository: IUserRepository,
+
 ): IApp {
-  return new ExpressApp(authController, archiveController, commentController, eventCreationController, rsvpController, logger);
+  return new ExpressApp(authController, archiveController, commentController, eventCreationController, rsvpController, logger, eventService, userRepository);
 }
