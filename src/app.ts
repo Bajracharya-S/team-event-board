@@ -20,6 +20,8 @@ import {
   touchAppSession,
 } from "./session/AppSession";
 import { ILoggingService } from "./service/LoggingService";
+import type { IEventService } from "./event/EventService";
+
 
 type AsyncRequestHandler = RequestHandler;
 
@@ -42,6 +44,8 @@ class ExpressApp implements IApp {
     private readonly commentController: ICommentController,
     private readonly eventCreationController: IEventCreationController,
     private readonly logger: ILoggingService,
+    private readonly eventService: IEventService,
+
   ) {
     this.app = express();
     this.registerMiddleware();
@@ -339,6 +343,7 @@ export function CreateApp(
   commentController: ICommentController,
   eventCreationController: IEventCreationController,
   logger: ILoggingService,
+  eventService: IEventService,
 ): IApp {
-  return new ExpressApp(authController, archiveController, commentController, eventCreationController, logger);
+  return new ExpressApp(authController, archiveController, commentController, eventCreationController, logger, eventService);
 }
