@@ -1,6 +1,7 @@
 import { Ok, Err, type Result } from '../lib/result'
-import type { AttendeeEntry, GroupedAttendees } from './Attendee' 
+import type { AttendeeEntry, GroupedAttendees } from './Attendee'
 import type { IAttendeeRepository } from './AttendeeRepository'
+import type { IEventRepository } from '../event/EventRepository'
 
 export type AttendeeError =
   | { name: 'EventNotFound'; message: string }
@@ -14,30 +15,23 @@ export interface IAttendeeService {
   ): Promise<Result<GroupedAttendees, AttendeeError>>
 }
 
-// In-memory event store — matches the shape from the spec
-interface EventRecord {
-  id: string
-  organizerId: string
-  status: 'draft' | 'published' | 'cancelled' | 'past'
-}
-
-// Shared in-memory store — your teammate's Event feature will populate this
-export const eventStore = new Map<string, EventRecord>()
-
 export class AttendeeService implements IAttendeeService {
-  constructor(private readonly repo: IAttendeeRepository) {}
+  constructor(
+    private readonly repo: IAttendeeRepository,
+    private readonly eventRepo: IEventRepository,
+  ) {}
 
   async getGroupedAttendees(
     eventId: string,
     requesterId: string,
     requesterRole: string,
   ): Promise<Result<GroupedAttendees, AttendeeError>> {
-    const event = eventStore.get(eventId)
-
-    if (!event) {
+    const eventResult = await this.eventRepo.findById(eventId)
+    if (!eventResult.ok || !eventResult.value) {
       return Err({ name: 'EventNotFound', message: 'Event not found.' } as const)
     }
 
+    const event = eventResult.value
     const isAdmin = requesterRole === 'admin'
     const isOrganizer = event.organizerId === requesterId
 
@@ -46,20 +40,23 @@ export class AttendeeService implements IAttendeeService {
     }
 
     const attendees: AttendeeEntry[] = await this.repo.findByEvent(eventId)
-    const sorted = attendees.sort((a: AttendeeEntry, b: AttendeeEntry) => 
-    a.rsvpedAt.getTime() - b.rsvpedAt.getTime()
+    const sorted = attendees.sort((a: AttendeeEntry, b: AttendeeEntry) =>
+      a.rsvpedAt.getTime() - b.rsvpedAt.getTime()
     )
 
     const grouped: GroupedAttendees = {
-      going: sorted.filter((a : AttendeeEntry) => a.status === 'going'),
-      waitlisted: sorted.filter((a : AttendeeEntry) => a.status === 'waitlisted'),
-      cancelled: sorted.filter((a : AttendeeEntry) => a.status === 'cancelled'),
+      going: sorted.filter((a: AttendeeEntry) => a.status === 'going'),
+      waitlisted: sorted.filter((a: AttendeeEntry) => a.status === 'waitlisted'),
+      cancelled: sorted.filter((a: AttendeeEntry) => a.status === 'cancelled'),
     }
 
     return Ok(grouped)
   }
 }
 
-export function CreateAttendeeService(repo: IAttendeeRepository): IAttendeeService {
-  return new AttendeeService(repo)
+export function CreateAttendeeService(
+  repo: IAttendeeRepository,
+  eventRepo: IEventRepository,
+): IAttendeeService {
+  return new AttendeeService(repo, eventRepo)
 }
