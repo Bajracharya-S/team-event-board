@@ -5,6 +5,7 @@ import Layouts from "express-ejs-layouts";
 import { IAuthController } from "./auth/AuthController";
 import { IArchiveController } from "./archive/ArchiveController";
 import { ICommentController } from "./comment/CommentController";
+import { IEventCreationController } from "./event-creation/EventCreationController";
 import {
   AuthenticationRequired,
   AuthorizationRequired,
@@ -39,6 +40,7 @@ class ExpressApp implements IApp {
     private readonly authController: IAuthController,
     private readonly archiveController: IArchiveController,
     private readonly commentController: ICommentController,
+    private readonly eventCreationController: IEventCreationController,
     private readonly logger: ILoggingService,
   ) {
     this.app = express();
@@ -275,6 +277,29 @@ class ExpressApp implements IApp {
       }),
     );
 
+
+    // Event Creation (FT1) -----------------------------------
+
+    this.app.get(
+      "/events/new",
+      asyncHandler(async (req, res) => {
+        if (!this.requireRole(req, res, ["admin", "staff"], "Only organizers can create events.")) {
+          return;
+        }
+        await this.eventCreationController.showForm(req, res);
+      }),
+    );
+
+    this.app.post(
+      "/events",
+      asyncHandler(async (req, res) => {
+        if (!this.requireRole(req, res, ["admin", "staff"], "Only organizers can create events.")) {
+          return;
+        }
+        await this.eventCreationController.handleCreate(req, res);
+      }),
+    );
+
     // ── Authenticated home page ──────────────────────────────────────
     // TODO: Replace this placeholder with your project's main page.
 
@@ -312,7 +337,8 @@ export function CreateApp(
   authController: IAuthController,
   archiveController: IArchiveController,
   commentController: ICommentController,
+  eventCreationController: IEventCreationController,
   logger: ILoggingService,
 ): IApp {
-  return new ExpressApp(authController, archiveController, commentController, logger);
+  return new ExpressApp(authController, archiveController, commentController, eventCreationController, logger);
 }
