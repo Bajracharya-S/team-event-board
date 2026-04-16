@@ -5,6 +5,7 @@
 <p><strong>Description:</strong> <%= event.description %></p>
 <p><strong>Start:</strong> <%= event.startDatetime.toLocaleString() %></p>
 <p><strong>End:</strong> <%= event.endDatetime.toLocaleString() %></p>
+<p><strong>Organizer:</strong> <%= organizerName %></p>
 <p><strong>Attending:</strong> 0 / <%= event.capacity ?? 'Unlimited' %></p>
 
 <% if (currentUser.role === 'admin' || event.organizerId === currentUser.userId) { %>
