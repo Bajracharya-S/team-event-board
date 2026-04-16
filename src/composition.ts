@@ -24,7 +24,7 @@ import type { ILoggingService } from "./service/LoggingService";
 export let eventRepo: IEventRepository;
 import { InMemorySavedEventRepository } from "./saveForLater/SaveRepo";
 import { CreateSaveService } from "./saveForLater/SaveService";
-import { CreateSaveController } from "./saveForLater/SaveController";
+import { CreateSaveController } from "./saveForLater/saveController";
 
 export function createComposedApp(logger?: ILoggingService): IApp {
   const resolvedLogger = logger ?? CreateLoggingService();
