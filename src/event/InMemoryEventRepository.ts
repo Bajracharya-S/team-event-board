@@ -87,9 +87,25 @@ const SEED_EVENTS: IEvent[] = [
 
 class InMemoryEventRepository implements IEventRepository {
   private readonly events: Map<string, IEvent>;
+  private nextEventId: number;
 
   constructor(seed: IEvent[]) {
     this.events = new Map(seed.map((e) => [e.id, { ...e }]));
+    
+    this.nextEventId = 1;
+    for (const event of seed) {
+      const match = event.id.match(/event-(\d+)/);
+      if (match) {
+        const num = parseInt(match[1], 10);
+        if (num >= this.nextEventId) {
+          this.nextEventId = num + 1;
+        }
+      }
+    }
+  }
+
+  generateEventId(): string {
+    return `event-${this.nextEventId++}`;
   }
 
   async findAll(): Promise<Result<IEvent[], EventRepositoryError>> {

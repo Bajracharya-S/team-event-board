@@ -7,7 +7,6 @@ import {
   UnauthorizedError,
   type EventCreationError,
 } from "./errors";
-import { randomUUID } from "node:crypto";
 
 export type CreateEventInput = {
   title: string;
@@ -85,7 +84,7 @@ class EventCreationService implements IEventCreationService {
 
     const now = new Date();
     const event: IEvent = {
-      id: randomUUID(),
+      id: this.eventRepo.generateEventId(),
       title: input.title.trim(),
       description: input.description.trim(),
       location: input.location.trim(),
