@@ -32,7 +32,7 @@ class ArchiveService implements IArchiveService {
     }
 
     const publishedResult = await this.eventRepo.findByStatus("published");
-    if (!publishedResult.ok) {
+    if (publishedResult.ok === false) {
       return Err(UnexpectedError(publishedResult.value.message));
     }
 
@@ -41,7 +41,7 @@ class ArchiveService implements IArchiveService {
 
     for (const event of expired) {
       const updateResult = await this.eventRepo.updateStatus(event.id, "past");
-      if (!updateResult.ok) {
+      if (updateResult.ok === false) {
         return Err(UnexpectedError(updateResult.value.message));
       }
       archivedEventIds.push(event.id);
@@ -63,7 +63,7 @@ class ArchiveService implements IArchiveService {
     }
 
     const pastResult = await this.eventRepo.findByStatus("past");
-    if (!pastResult.ok) {
+    if (pastResult.ok === false) {
       return Err(UnexpectedError(pastResult.value.message));
     }
 
