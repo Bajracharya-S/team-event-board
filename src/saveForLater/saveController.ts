@@ -1,8 +1,8 @@
 import type { Response } from 'express'
 import type { IAppBrowserSession } from '../session/AppSession'
 import type { ILoggingService } from '../service/LoggingService'
-import type { ISaveService } from './SaveService'
-import { isSavedEventError } from './SavedEventErrors'
+import type { ISaveService} from './SaveService'
+import { isSavedEventError } from './SaveService'
 
 export interface ISaveController {
   toggleSaveEvent(res: Response, eventId: number, session: IAppBrowserSession): Promise<void>
