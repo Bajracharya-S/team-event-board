@@ -21,7 +21,7 @@ class EventService implements IEventService {
 
   async getEventById(eventId: string, actor: ActingUser): Promise<Result<IEvent, EventError>> {
     const result = await this.eventRepository.findById(eventId);
-    if (!result.ok) return Err(UnexpectedEventError(result.value.message));
+    if (!result.ok) return Err(UnexpectedEventError("An unexpected error occurred."));
 
     const event = result.value;
     if (!event) return Err(EventNotFoundError());
@@ -37,7 +37,7 @@ class EventService implements IEventService {
 
   async publishEvent(eventId: string, actor: ActingUser): Promise<Result<IEvent, EventError>> {
     const result = await this.eventRepository.findById(eventId);
-    if (!result.ok) return Err(UnexpectedEventError(result.value.message));
+    if (!result.ok) return Err(UnexpectedEventError("An unexpected error occurred."));
 
     const event = result.value;
     if (!event) return Err(EventNotFoundError());
@@ -51,14 +51,14 @@ class EventService implements IEventService {
     }
 
     const updated = await this.eventRepository.updateStatus(eventId, "published");
-    if (!updated.ok) return Err(UnexpectedEventError(updated.value.message));
+    if (!updated.ok) return Err(UnexpectedEventError("An unexpected error occurred."));
     if (!updated.value) return Err(UnexpectedEventError("Event not found during update."));
     return Ok(updated.value);
 }
 
   async cancelEvent(eventId: string, actor: ActingUser): Promise<Result<IEvent, EventError>> {
     const result = await this.eventRepository.findById(eventId);
-    if (!result.ok)  return Err(UnexpectedEventError(result.value.message));
+    if (!result.ok)  return Err(UnexpectedEventError("An unexpected error occurred."));
 
     const event = result.value;
     if (!event) return Err(EventNotFoundError());
@@ -72,7 +72,7 @@ class EventService implements IEventService {
     }
 
     const updated = await this.eventRepository.updateStatus(eventId, "cancelled");
-    if (!updated.ok) return Err(UnexpectedEventError(updated.value.message));
+    if (!updated.ok) return Err(UnexpectedEventError("An unexpected error occurred."));
     if (!updated.value) return Err(UnexpectedEventError("Event not found during update."));
     return Ok(updated.value);
 }
