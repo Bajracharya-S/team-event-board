@@ -1,4 +1,4 @@
-Siddh Bhagat- Features 1 and 4
+Siddh Bhagat - Features 1 and 4
 
 Feature 1 — Event Creation
 
