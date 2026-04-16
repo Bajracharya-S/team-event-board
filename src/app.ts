@@ -319,6 +319,80 @@ class ExpressApp implements IApp {
         res.render("home", { session: browserSession, pageError: null });
       }),
     );
+    
+    // ── Event Detail (FT2) & Publishing/Cancellation (FT5) ───────────
+
+this.app.get(
+  "/events/:id",
+  asyncHandler(async (req, res) => {
+    if (!this.requireAuthenticated(req, res)) return;
+    const currentUser = getAuthenticatedUser(sessionStore(req));
+    if (!currentUser) return;
+
+    const result = await this.eventService.getEventById(req.params.id, {
+      userId: currentUser.userId,
+      role: currentUser.role,
+    });
+
+    if (!result.ok) {
+      const status = result.value.kind === "EventNotFound" ? 404 : 500;
+      res.status(status).render("partials/error", { message: result.value.message, layout: false });
+      return;
+    }
+
+    res.render("eventDetail", { event: result.value, currentUser, pageError: null });
+  }),
+);
+
+this.app.post(
+  "/events/:id/publish",
+  asyncHandler(async (req, res) => {
+    if (!this.requireAuthenticated(req, res)) return;
+    const currentUser = getAuthenticatedUser(sessionStore(req));
+    if (!currentUser) return;
+
+    const result = await this.eventService.publishEvent(req.params.id, {
+      userId: currentUser.userId,
+      role: currentUser.role,
+    });
+
+    if (!result.ok) {
+      const status = result.value.kind === "EventNotFound" ? 404
+        : result.value.kind === "Forbidden" ? 403
+        : result.value.kind === "InvalidTransition" ? 400
+        : 500;
+      res.status(status).render("partials/error", { message: result.value.message, layout: false });
+      return;
+    }
+
+    res.redirect(`/events/${result.value.id}`);
+  }),
+);
+
+this.app.post(
+  "/events/:id/cancel",
+  asyncHandler(async (req, res) => {
+    if (!this.requireAuthenticated(req, res)) return;
+    const currentUser = getAuthenticatedUser(sessionStore(req));
+    if (!currentUser) return;
+
+    const result = await this.eventService.cancelEvent(req.params.id, {
+      userId: currentUser.userId,
+      role: currentUser.role,
+    });
+
+    if (!result.ok) {
+      const status = result.value.kind === "EventNotFound" ? 404
+        : result.value.kind === "Forbidden" ? 403
+        : result.value.kind === "InvalidTransition" ? 400
+        : 500;
+      res.status(status).render("partials/error", { message: result.value.message, layout: false });
+      return;
+    }
+
+    res.redirect(`/events/${result.value.id}`);
+  }),
+);
 
     // ── Error handler ────────────────────────────────────────────────
 
