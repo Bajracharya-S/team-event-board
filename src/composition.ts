@@ -72,5 +72,6 @@ export function createComposedApp(logger?: ILoggingService): IApp {
   const attendeeService = CreateAttendeeService(attendeeRepo)
   const attendeeController = CreateAttendeeController(attendeeService, resolvedLogger)
 
-  return CreateApp(authController, archiveController, commentController, eventCreationController, rsvpController, saveController, resolvedLogger, eventService, authUsers, attendeeController);}
+  return CreateApp(authController, archiveController, commentController, eventCreationController, rsvpController, saveController, resolvedLogger, attendeeController, eventService, authUsers);
+}
 
