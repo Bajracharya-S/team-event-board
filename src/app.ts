@@ -21,6 +21,8 @@ import {
 } from "./session/AppSession";
 import { ILoggingService } from "./service/LoggingService";
 import type { IEventService } from "./event/EventService";
+import type { EventError } from "./event/errors";
+
 
 
 type AsyncRequestHandler = RequestHandler;
@@ -322,77 +324,83 @@ class ExpressApp implements IApp {
     
     // ── Event Detail (FT2) & Publishing/Cancellation (FT5) ───────────
 
-this.app.get(
-  "/events/:id",
-  asyncHandler(async (req, res) => {
-    if (!this.requireAuthenticated(req, res)) return;
-    const currentUser = getAuthenticatedUser(sessionStore(req));
-    if (!currentUser) return;
-
-    const result = await this.eventService.getEventById(req.params.id, {
-      userId: currentUser.userId,
-      role: currentUser.role,
-    });
-
-    if (!result.ok) {
-      const status = result.value.kind === "EventNotFound" ? 404 : 500;
-      res.status(status).render("partials/error", { message: result.value.message, layout: false });
-      return;
-    }
-
-    res.render("eventDetail", { event: result.value, currentUser, pageError: null });
-  }),
-);
-
-this.app.post(
-  "/events/:id/publish",
-  asyncHandler(async (req, res) => {
-    if (!this.requireAuthenticated(req, res)) return;
-    const currentUser = getAuthenticatedUser(sessionStore(req));
-    if (!currentUser) return;
-
-    const result = await this.eventService.publishEvent(req.params.id, {
-      userId: currentUser.userId,
-      role: currentUser.role,
-    });
-
-    if (!result.ok) {
-      const status = result.value.kind === "EventNotFound" ? 404
-        : result.value.kind === "Forbidden" ? 403
-        : result.value.kind === "InvalidTransition" ? 400
-        : 500;
-      res.status(status).render("partials/error", { message: result.value.message, layout: false });
-      return;
-    }
-
-    res.redirect(`/events/${result.value.id}`);
-  }),
-);
-
-this.app.post(
-  "/events/:id/cancel",
-  asyncHandler(async (req, res) => {
-    if (!this.requireAuthenticated(req, res)) return;
-    const currentUser = getAuthenticatedUser(sessionStore(req));
-    if (!currentUser) return;
-
-    const result = await this.eventService.cancelEvent(req.params.id, {
-      userId: currentUser.userId,
-      role: currentUser.role,
-    });
-
-    if (!result.ok) {
-      const status = result.value.kind === "EventNotFound" ? 404
-        : result.value.kind === "Forbidden" ? 403
-        : result.value.kind === "InvalidTransition" ? 400
-        : 500;
-      res.status(status).render("partials/error", { message: result.value.message, layout: false });
-      return;
-    }
-
-    res.redirect(`/events/${result.value.id}`);
-  }),
-);
+    this.app.get(
+      "/events/:id",
+      asyncHandler(async (req, res) => {
+        if (!this.requireAuthenticated(req, res)) return;
+        const currentUser = getAuthenticatedUser(sessionStore(req));
+        if (!currentUser) return;
+    
+        const id = req.params.id as string;
+        const result = await this.eventService.getEventById(id, {
+          userId: currentUser.userId,
+          role: currentUser.role,
+        });
+    
+        if (!result.ok) {
+          const error = result.value as EventError;
+          const status = error.kind === "EventNotFound" ? 404 : 500;
+          res.status(status).render("partials/error", { message: error.message, layout: false });
+          return;
+        }
+    
+        res.render("eventDetail", { event: result.value, currentUser, pageError: null });
+      }),
+    );
+    
+    this.app.post(
+      "/events/:id/publish",
+      asyncHandler(async (req, res) => {
+        if (!this.requireAuthenticated(req, res)) return;
+        const currentUser = getAuthenticatedUser(sessionStore(req));
+        if (!currentUser) return;
+    
+        const id = req.params.id as string;
+        const result = await this.eventService.publishEvent(id, {
+          userId: currentUser.userId,
+          role: currentUser.role,
+        });
+    
+        if (!result.ok) {
+          const error = result.value as EventError;
+          const status = error.kind === "EventNotFound" ? 404
+            : error.kind === "Forbidden" ? 403
+            : error.kind === "InvalidTransition" ? 400
+            : 500;
+          res.status(status).render("partials/error", { message: error.message, layout: false });
+          return;
+        }
+    
+        res.redirect(`/events/${result.value.id}`);
+      }),
+    );
+    
+    this.app.post(
+      "/events/:id/cancel",
+      asyncHandler(async (req, res) => {
+        if (!this.requireAuthenticated(req, res)) return;
+        const currentUser = getAuthenticatedUser(sessionStore(req));
+        if (!currentUser) return;
+    
+        const id = req.params.id as string;
+        const result = await this.eventService.cancelEvent(id, {
+          userId: currentUser.userId,
+          role: currentUser.role,
+        });
+    
+        if (!result.ok) {
+          const error = result.value as EventError;
+          const status = error.kind === "EventNotFound" ? 404
+            : error.kind === "Forbidden" ? 403
+            : error.kind === "InvalidTransition" ? 400
+            : 500;
+          res.status(status).render("partials/error", { message: error.message, layout: false });
+          return;
+        }
+    
+        res.redirect(`/events/${result.value.id}`);
+      }),
+    );
 
     // ── Error handler ────────────────────────────────────────────────
 
