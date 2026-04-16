@@ -53,11 +53,8 @@ class ExpressApp implements IApp {
     private readonly commentController: ICommentController,
     private readonly eventCreationController: IEventCreationController,
     private readonly rsvpController: IRSVPController,
-
     private readonly saveController: ISaveController,
-
     private readonly attendeeController: IAttendeeController,
-
     private readonly logger: ILoggingService,
     private readonly eventService: IEventService,
     private readonly userRepository: IUserRepository,
@@ -505,5 +502,5 @@ export function CreateApp(
   userRepository: IUserRepository,
 
 ): IApp {
-  return new ExpressApp(authController, archiveController, commentController, eventCreationController, rsvpController, attendeeController, saveController, logger, eventService, userRepository);
+  return new ExpressApp(authController, archiveController, commentController, eventCreationController, rsvpController, saveController, attendeeController, logger, eventService, userRepository);
 }
