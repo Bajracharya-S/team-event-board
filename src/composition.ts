@@ -17,6 +17,8 @@ import { CreateRSVPService } from "./rsvp/RSVPService";
 import { CreateRSVPController } from "./rsvp/RSVPController";
 import { CreateEventCreationService } from "./event-creation/EventCreationService";
 import { CreateEventCreationController } from "./event-creation/EventCreationController";
+import { CreateEventListService } from "./event-list/EventListService";
+import { CreateEventListController } from "./event-list/EventListController";
 import { CreateLoggingService } from "./service/LoggingService";
 import type { ILoggingService } from "./service/LoggingService";
 
@@ -27,6 +29,10 @@ export function createComposedApp(logger?: ILoggingService): IApp {
 
   // Event repository (shared across features)
   eventRepo = CreateInMemoryEventRepository();
+
+  // Ft(6,10) Event List / Search / Filter
+  const eventListService = CreateEventListService(eventRepo);
+  const eventListController = CreateEventListController(eventListService);
 
   // Archive
   const archiveService = CreateArchiveService(eventRepo);
@@ -46,11 +52,23 @@ export function createComposedApp(logger?: ILoggingService): IApp {
 
   // Ft(1) Event Creation
   const eventCreationService = CreateEventCreationService(eventRepo);
-  const eventCreationController = CreateEventCreationController(eventCreationService, resolvedLogger);
-// Ft(4) RSVP
+  const eventCreationController = CreateEventCreationController(
+    eventCreationService,
+    resolvedLogger,
+  );
+
+  // Ft(4) RSVP
   const rsvpRepo = CreateInMemoryRSVPRepository();
   const rsvpService = CreateRSVPService(rsvpRepo, eventRepo);
   const rsvpController = CreateRSVPController(rsvpService, resolvedLogger);
 
-  return CreateApp(authController, archiveController, commentController, eventCreationController, rsvpController, resolvedLogger);
+  return CreateApp(
+    authController,
+    archiveController,
+    commentController,
+    eventCreationController,
+    rsvpController,
+    eventListController,
+    resolvedLogger,
+  );
 }

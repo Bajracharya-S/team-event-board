@@ -1,0 +1,59 @@
+<h1>Upcoming Events</h1>
+
+<form method="GET" action="/events">
+  <div>
+    <label for="query">Search</label>
+    <input
+      type="text"
+      id="query"
+      name="query"
+      value="<%= filters.query %>"
+      placeholder="Search by title, description, or location"
+    />
+  </div>
+
+  <div>
+    <label for="category">Category</label>
+    <select id="category" name="category">
+      <option value="">All Categories</option>
+      <option value="meeting" <%= filters.category === "meeting" ? "selected" : "" %>>Meeting</option>
+      <option value="hackathon" <%= filters.category === "hackathon" ? "selected" : "" %>>Hackathon</option>
+      <option value="workshop" <%= filters.category === "workshop" ? "selected" : "" %>>Workshop</option>
+      <option value="social" <%= filters.category === "social" ? "selected" : "" %>>Social</option>
+    </select>
+  </div>
+
+  <div>
+    <label for="timeframe">Timeframe</label>
+    <select id="timeframe" name="timeframe">
+      <option value="all" <%= filters.timeframe === "all" ? "selected" : "" %>>All Upcoming</option>
+      <option value="week" <%= filters.timeframe === "week" ? "selected" : "" %>>This Week</option>
+      <option value="weekend" <%= filters.timeframe === "weekend" ? "selected" : "" %>>This Weekend</option>
+    </select>
+  </div>
+
+  <button type="submit">Apply</button>
+</form>
+
+<hr />
+
+<% if (events.length === 0) { %>
+  <p>No matching events found.</p>
+<% } %>
+
+<% if (events.length > 0) { %>
+  <ul>
+    <% events.forEach((event) => { %>
+      <li>
+        <h3><%= event.title %></h3>
+        <p><strong>Category:</strong> <%= event.category %></p>
+        <p><strong>Location:</strong> <%= event.location %></p>
+        <p><strong>Description:</strong> <%= event.description %></p>
+        <p>
+          <strong>Starts:</strong>
+          <%= event.startDatetime.toLocaleString() %>
+        </p>
+      </li>
+    <% }) %>
+  </ul>
+<% } %>
