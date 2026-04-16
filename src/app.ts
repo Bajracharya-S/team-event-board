@@ -23,6 +23,8 @@ import {
 import { ILoggingService } from "./service/LoggingService";
 import type { IEventService } from "./event/EventService";
 import type { EventError } from "./event/errors";
+import type { IUserRepository } from "./auth/UserRepository";
+
 
 
 
@@ -49,6 +51,8 @@ class ExpressApp implements IApp {
     private readonly rsvpController: IRSVPController,
     private readonly logger: ILoggingService,
     private readonly eventService: IEventService,
+    private readonly userRepository: IUserRepository,
+
 
   ) {
     this.app = express();
@@ -359,7 +363,15 @@ class ExpressApp implements IApp {
           return;
         }
     
-        res.render("eventDetail", { event: result.value, currentUser, pageError: null });
+        const event = result.value;
+    
+        // Look up organizer display name
+        const organizerResult = await this.userRepository.findById(event.organizerId);
+        const organizerName = organizerResult.ok && organizerResult.value
+          ? organizerResult.value.displayName
+          : "Unknown";
+    
+        res.render("eventDetail", { event, currentUser, organizerName, pageError: null });
       }),
     );
     
@@ -442,10 +454,8 @@ export function CreateApp(
   rsvpController: IRSVPController,
   logger: ILoggingService,
   eventService: IEventService,
+  userRepository: IUserRepository,
+
 ): IApp {
-<<<<<<< HEAD
-  return new ExpressApp(authController, archiveController, commentController, eventCreationController, logger, eventService);
-=======
-  return new ExpressApp(authController, archiveController, commentController, eventCreationController, rsvpController, logger);
->>>>>>> 0f0bc4cd77cba5e2e6f5f7218c32d87693885b73
+  return new ExpressApp(authController, archiveController, commentController, eventCreationController, rsvpController, logger, eventService, userRepository);
 }
