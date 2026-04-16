@@ -1,5 +1,5 @@
 import { Ok, Err, type Result } from '../lib/result'
-import type { AttendeeEntry, GroupedAttendees } from './Attendee' //modify to fit RSVP model
+import type { AttendeeEntry, GroupedAttendees } from './Attendee' 
 import type { IAttendeeRepository } from './AttendeeRepository'
 
 export type AttendeeError =
@@ -8,7 +8,7 @@ export type AttendeeError =
 
 export interface IAttendeeService {
   getGroupedAttendees(
-    eventId: number,
+    eventId: string,
     requesterId: string,
     requesterRole: string,
   ): Promise<Result<GroupedAttendees, AttendeeError>>
@@ -16,33 +16,33 @@ export interface IAttendeeService {
 
 // In-memory event store — matches the shape from the spec
 interface EventRecord {
-  id: number
+  id: string
   organizerId: string
   status: 'draft' | 'published' | 'cancelled' | 'past'
 }
 
 // Shared in-memory store — your teammate's Event feature will populate this
-export const eventStore = new Map<number, EventRecord>()
+export const eventStore = new Map<string, EventRecord>()
 
 export class AttendeeService implements IAttendeeService {
   constructor(private readonly repo: IAttendeeRepository) {}
 
   async getGroupedAttendees(
-    eventId: number,
+    eventId: string,
     requesterId: string,
     requesterRole: string,
   ): Promise<Result<GroupedAttendees, AttendeeError>> {
     const event = eventStore.get(eventId)
 
     if (!event) {
-      return Err({ name: 'EventNotFound', message: 'Event not found.' })
+      return Err({ name: 'EventNotFound', message: 'Event not found.' } as const)
     }
 
     const isAdmin = requesterRole === 'admin'
     const isOrganizer = event.organizerId === requesterId
 
     if (!isAdmin && !isOrganizer) {
-      return Err({ name: 'Unauthorized', message: 'Only the organizer or an admin can view attendees.' })
+      return Err({ name: 'Unauthorized', message: 'Only the organizer or an admin can view attendees.' } as const)
     }
 
     const attendees: AttendeeEntry[] = await this.repo.findByEvent(eventId)

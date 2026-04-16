@@ -324,12 +324,11 @@ class ExpressApp implements IApp {
         return;
       }
       const browserSession = recordPageView(sessionStore(req));
-      const id = Number(req.params.id);
-      if (!Number.isInteger(id) || id <= 0) {
+      const id = typeof req.params.id === 'string' ? req.params.id : req.params.id[0]
+      if (!id) {
         res.status(400).render("partials/error", { message: "Invalid ID.", layout: false });
         return;
       }
-
       await this.attendeeController.showAttendees(res, id, browserSession);
     }),
 );

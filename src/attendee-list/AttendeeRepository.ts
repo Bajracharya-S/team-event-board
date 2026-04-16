@@ -1,30 +1,26 @@
-import type { Entry } from './Attendee'
+import type { IRSVP } from '../rsvp/RSVP'
+import type { IRSVPRepository } from '../rsvp/RSVPRepository'
+import type { AttendeeEntry } from './Attendee'
 
 export interface IAttendeeRepository {
-  findByEvent(eventId: number): Promise<Entry[]>
+  findByEvent(eventId: string): Promise<AttendeeEntry[]>
 }
 
-interface RsvpRecord {
-  id: number
-  eventId: number
-  userId: string
-  status: 'going' | 'waitlisted' | 'cancelled'
-  createdAt: Date
-}
-
-
-export const rsvpStore = new Map<number, RsvpRecord>()
+// User display name lookup — keyed by userId, populated from session data
 export const userDisplayNames = new Map<string, string>()
 
 export class InMemoryAttendeeRepository implements IAttendeeRepository {
-  async findByEvent(eventId: number): Promise<AttendeeEntry[]> {
-    return [...rsvpStore.values()]
-      .filter(r => r.eventId === eventId)
-      .map(r => ({
-        userId: r.userId,
-        displayName: userDisplayNames.get(r.userId) ?? r.userId,
-        status: r.status,
-        rsvpedAt: r.createdAt,
-      }))
+  constructor(private readonly rsvpRepo: IRSVPRepository) {}
+
+  async findByEvent(eventId: string): Promise<AttendeeEntry[]> {
+    const result = await this.rsvpRepo.findByEvent(eventId)
+    if (!result.ok) return []
+
+    return result.value.map((r: IRSVP) => ({
+      userId: r.userId,
+      displayName: userDisplayNames.get(r.userId) ?? r.userId,
+      status: r.status,
+      rsvpedAt: r.createdAt,
+    }))
   }
 }

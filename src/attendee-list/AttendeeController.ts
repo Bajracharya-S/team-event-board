@@ -1,12 +1,13 @@
 import type { Response } from 'express'
 import type { IAppBrowserSession } from '../session/AppSession'
 import type { ILoggingService } from '../service/LoggingService'
-import type { IAttendeeService } from './AttendeeService'
+import type { IAttendeeService, AttendeeError} from './AttendeeService'
+
 
 export interface IAttendeeController {
   showAttendees(
     res: Response,
-    eventId: number,
+    eventId: string,
     session: IAppBrowserSession,
   ): Promise<void>
 }
@@ -19,7 +20,7 @@ class AttendeeController implements IAttendeeController {
 
   async showAttendees(
     res: Response,
-    eventId: number,
+    eventId: string,
     session: IAppBrowserSession,
   ): Promise<void> {
     const user = session.authenticatedUser
@@ -31,14 +32,15 @@ class AttendeeController implements IAttendeeController {
     this.logger.info(`User ${user.userId} requesting attendees for event ${eventId}`)
     const result = await this.service.getGroupedAttendees(eventId, user.userId, user.role)
 
-    if (!result.ok) {
-      const status = result.value.name === 'EventNotFound' ? 404 : 403
-      res.status(status).render('partials/error', {
-        message: result.value.message,
-        layout: false,
-      })
-      return
-    }
+  if (!result.ok) {
+    const error = result.value as AttendeeError
+    const status = error.name === 'EventNotFound' ? 404 : 403
+    res.status(status).render('partials/error', {
+      message: error.message,
+      layout: false,
+    })
+    return
+  }
 
     res.render('events/attendees', {
       eventId,
