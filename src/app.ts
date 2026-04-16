@@ -278,7 +278,7 @@ class ExpressApp implements IApp {
     );
 
 
-    // -- Event Creation (FT1) -------------------------------------------------
+    // Event Creation (FT1) -----------------------------------
 
     this.app.get(
       "/events/new",
