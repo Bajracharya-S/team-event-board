@@ -21,7 +21,8 @@ export function isSavedEventError(value: unknown): value is SavedEventError {
 export type ToggleOutcome = 'saved' | 'unsaved'
 
 export interface ISaveService {
-  toggleSaveEvent(userId: string, eventId: number): Promise<Result<ToggleOutcome, SavedEventError>>
+  toggleSaveEvent(userId: string, eventId: string): Promise<Result<ToggleOutcome, SavedEventError>>
+  getSavedEvents(userId: string): Promise<SavedEvent[]>
 }
 
 export class SaveService implements ISaveService {
@@ -29,7 +30,7 @@ export class SaveService implements ISaveService {
 
   async toggleSaveEvent(
     userId: string,
-    eventId: number,
+    eventId: string,
   ): Promise<Result<ToggleOutcome, SavedEventError>> {
     const existing = await this.repo.findByUserAndEvent(userId, eventId)
 
@@ -41,6 +42,10 @@ export class SaveService implements ISaveService {
     await this.repo.save(userId, eventId)
     return Ok('saved')
   }
+
+  async getSavedEvents(userId: string): Promise<SavedEvent[]> {
+  return this.repo.findAllByUser(userId)
+}
 
 }
 
