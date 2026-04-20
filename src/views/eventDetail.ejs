@@ -21,6 +21,13 @@
   <% } %>
 <% } else { %>
   <button>RSVP</button>
+  <% if (event.status === 'published') { %>
+    <form method="POST" action="/events/<%= event.id %>/saveToggle">
+      <button type="submit">
+        <%= savedEventIds.includes(event.id) ? 'Unsave' : 'Save' %>
+      </button>
+    </form>
+<% } %>
 <% } %>
 
 <% if (pageError) { %>
