@@ -304,8 +304,8 @@ class ExpressApp implements IApp {
         }
 
         const session = touchAppSession(sessionStore(req));
-        const id = Number(req.params.id);
-        if (!Number.isInteger(id) || id <= 0) {
+        const id = typeof req.params.id === 'string' ? req.params.id : req.params.id[0]
+        if (!id) {
           res.status(400).render("entries/partials/error", {
             message: "Invalid ID.",
             layout: false,
@@ -316,6 +316,17 @@ class ExpressApp implements IApp {
         await this.saveController.toggleSaveEvent(res, id, session);
       }),
     );
+
+    this.app.get(
+  "/profile/saved",
+  asyncHandler(async (req, res) => {
+    if (!this.requireRole(req, res, ["user"], "Only members have a saved list.")) {
+      return;
+    }
+    const browserSession = recordPageView(sessionStore(req));
+    await this.saveController.showSavedList(res, browserSession);
+  }),
+);
 
     // Event Creation (FT1) -----------------------------------
 
@@ -412,9 +423,13 @@ class ExpressApp implements IApp {
         const organizerName = organizerResult.ok && organizerResult.value
           ? organizerResult.value.displayName
           : "Unknown";
-    
-        res.render("eventDetail", { event, currentUser, organizerName, pageError: null, session: browserSession });
-      }),
+        
+        const savedEventIds = currentUser.role === 'user'
+          ? await this.saveController.getSavedEventIds(currentUser.userId)
+          : []
+
+          res.render("eventDetail", { event, currentUser, organizerName, pageError: null, session: browserSession, savedEventIds });
+        }),
     );
     
     this.app.post(

@@ -5,7 +5,9 @@ import type { ISaveService} from './SaveService'
 import { isSavedEventError } from './SaveService'
 
 export interface ISaveController {
-  toggleSaveEvent(res: Response, eventId: number, session: IAppBrowserSession): Promise<void>
+  toggleSaveEvent(res: Response, eventId: string, session: IAppBrowserSession): Promise<void>
+    showSavedList(res: Response, session: IAppBrowserSession): Promise<void>
+    getSavedEventIds(userId: string): Promise<string[]>
 }
 
 class SaveController implements ISaveController {
@@ -23,7 +25,7 @@ class SaveController implements ISaveController {
 
   async toggleSaveEvent(
     res: Response,
-    eventId: number,
+    eventId: string,
     session: IAppBrowserSession,
   ): Promise<void> {
     const user = session.authenticatedUser
@@ -52,6 +54,23 @@ class SaveController implements ISaveController {
     this.logger.info(`Event ${eventId} ${result.value} for user ${user.userId}`)
     res.redirect(`/events/${eventId}`)
   }
+
+  async showSavedList(res: Response, session: IAppBrowserSession): Promise<void> {
+  const user = session.authenticatedUser
+  if (!user) {
+    res.redirect('/login')
+    return
+  }
+
+  this.logger.info(`Showing saved list for user ${user.userId}`)
+  const savedEvents = await this.service.getSavedEvents(user.userId)
+  res.render('events/save', { savedEvents, session })
+}
+
+async getSavedEventIds(userId: string): Promise<string[]> {
+  const saved = await this.service.getSavedEvents(userId)
+  return saved.map(e => e.eventId)
+}
 }
 
 export function CreateSaveController(
