@@ -52,6 +52,12 @@ class SaveController implements ISaveController {
   }
 
   const isSaved = result.value === 'saved'
+
+  if (!isSaved) {
+    // returning empty string removes the li from the saved list
+    res.status(200).send('')
+    return
+  }
   res.render('saveButton', { eventId, isSaved, layout: false })
 }
 
