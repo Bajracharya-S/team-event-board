@@ -41,4 +41,12 @@ describe("GET /events/:id", () => {
         expect(res.status).toBe(200);
         expect(res.text).toContain("RSVP");
     });
+
+    it("returns 404 for a draft event viewed by a user", async () => {
+        const cookie = await loginAs("user@app.test", "password123");
+        const res = await request(app)
+          .get("/events/event-5")
+          .set("Cookie", cookie);
+        expect(res.status).toBe(404);
+    });
   });
