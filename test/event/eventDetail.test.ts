@@ -109,3 +109,50 @@ describe("POST /events/:id/publish", () => {
       expect(res.status).toBe(404);
     });
   });
+
+  describe("POST /events/:id/cancel", () => {
+    it("returns 302 and cancels a published event as organizer", async () => {
+      const cookie = await loginAs("staff@app.test", "password123");
+      const res = await request(app)
+        .post("/events/event-1/cancel")
+        .set("Cookie", cookie);
+      expect(res.status).toBe(302);
+    });
+  
+    it("returns 400 when trying to cancel a draft event", async () => {
+      const cookie = await loginAs("staff@app.test", "password123");
+      const res = await request(app)
+        .post("/events/event-5/cancel")
+        .set("Cookie", cookie);
+      expect(res.status).toBe(400);
+    });
+  
+    it("returns 403 when a regular user tries to cancel", async () => {
+      const cookie = await loginAs("user@app.test", "password123");
+      const res = await request(app)
+        .post("/events/event-1/cancel")
+        .set("Cookie", cookie);
+      expect(res.status).toBe(403);
+    });
+  
+    it("returns 400 when cancelling an already cancelled event", async () => {
+      const cookie = await loginAs("staff@app.test", "password123");
+      // First cancel it
+      await request(app)
+        .post("/events/event-1/cancel")
+        .set("Cookie", cookie);
+      // Then try again
+      const res = await request(app)
+        .post("/events/event-1/cancel")
+        .set("Cookie", cookie);
+      expect(res.status).toBe(400);
+    });
+  
+    it("returns 404 when cancelling a non-existent event", async () => {
+      const cookie = await loginAs("staff@app.test", "password123");
+      const res = await request(app)
+        .post("/events/non-existent-id/cancel")
+        .set("Cookie", cookie);
+      expect(res.status).toBe(404);
+    });
+});
