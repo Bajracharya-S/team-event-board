@@ -49,4 +49,28 @@ describe("GET /events/:id", () => {
           .set("Cookie", cookie);
         expect(res.status).toBe(404);
     });
+
+    it("returns 404 for a non-existent event as admin", async () => {
+        const cookie = await loginAs("admin@app.test", "password123");
+        const res = await request(app)
+            .get("/events/event-20")
+            .set("Cookie", cookie);
+        expect(res.status).toBe(404);
+      });
+  
+    it("returns 404 for a non-existent event as staff", async () => {
+        const cookie = await loginAs("staff@app.test", "password123");
+        const res = await request(app)
+            .get("/events/event-20")
+            .set("Cookie", cookie);
+        expect(res.status).toBe(404);
+    });
+  
+    it("returns 404 for a non-existent event as user", async () => {
+        const cookie = await loginAs("user@app.test", "password123");
+        const res = await request(app)
+            .get("/events/event-20")
+            .set("Cookie", cookie);
+        expect(res.status).toBe(404);
+    });
   });
