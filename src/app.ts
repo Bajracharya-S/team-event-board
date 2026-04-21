@@ -510,6 +510,11 @@ class ExpressApp implements IApp {
           return;
         }
     
+        if (this.isHtmxRequest(req)) {
+          res.render("partials/eventControls", { event: result.value, layout: false });
+          return;
+        }
+    
         res.redirect(`/events/${result.value.id}`);
       }),
     );
@@ -534,6 +539,11 @@ class ExpressApp implements IApp {
             : error.kind === "InvalidTransition" ? 400
             : 500;
           res.status(status).render("partials/error", { message: error.message, layout: false });
+          return;
+        }
+    
+        if (this.isHtmxRequest(req)) {
+          res.render("partials/eventControls", { event: result.value, layout: false });
           return;
         }
     

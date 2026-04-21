@@ -1,5 +1,5 @@
 <h1><%= event.title %></h1>
-<p><strong>Status:</strong> <%= event.status %></p>
+<p><strong>Status:</strong> <span id="event-status-badge-<%= event.id %>"><%= event.status %></span></p>
 <p><strong>Category:</strong> <%= event.category %></p>
 <p><strong>Location:</strong> <%= event.location %></p>
 <p><strong>Description:</strong> <%= event.description %></p>
@@ -9,25 +9,25 @@
 <p><strong>Attending:</strong> 0 / <%= event.capacity ?? 'Unlimited' %></p>
 
 <% if (currentUser.role === 'admin' || event.organizerId === currentUser.userId) { %>
-  <% if (event.status === 'draft') { %>
-    <form method="POST" action="/events/<%= event.id %>/publish">
-      <button type="submit">Publish Event</button>
-    </form>
-  <% } %>
-  <% if (event.status === 'published') { %>
-    <form method="POST" action="/events/<%= event.id %>/cancel">
-      <button type="submit">Cancel Event</button>
-    </form>
-  <% } %>
-  <div id="attendee-list">
-    <button
-      hx-get="/events/<%= event.id %>/attendees/partial"
-      hx-target="#attendee-list"
-      hx-swap="outerHTML"
-      class="px-4 py-2 rounded-lg bg-slate-600 text-white font-medium cursor-pointer hover:bg-slate-700 text-sm"
-    >
-      View Attendees
-    </button>
+  <div id="event-controls-<%= event.id %>">
+    <% if (event.status === 'draft') { %>
+      <form
+        hx-post="/events/<%= event.id %>/publish"
+        hx-target="#event-controls-<%= event.id %>"
+        hx-swap="outerHTML"
+      >
+        <button type="submit">Publish Event</button>
+      </form>
+    <% } %>
+    <% if (event.status === 'published') { %>
+      <form
+        hx-post="/events/<%= event.id %>/cancel"
+        hx-target="#event-controls-<%= event.id %>"
+        hx-swap="outerHTML"
+      >
+        <button type="submit">Cancel Event</button>
+      </form>
+    <% } %>
   </div>
 <% } else { %>
   <div class="flex gap-2">
