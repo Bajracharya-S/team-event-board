@@ -15,6 +15,10 @@ class ArchiveController implements IArchiveController {
     private readonly logger: ILoggingService,
   ) {}
 
+  private isHtmxRequest(req: Request): boolean {
+    return req.get("HX-Request") === "true";
+  }
+
   async showArchive(req: Request, res: Response): Promise<void> {
     const store = req.session as AppSessionStore;
     const browserSession = recordPageView(store);
@@ -59,12 +63,20 @@ class ArchiveController implements IArchiveController {
       return;
     }
 
-    res.render("archive/index", {
+    const viewModel = {
       events: eventsResult.value,
       selectedCategory: category ?? "",
       validCategories: VALID_CATEGORIES,
       session: browserSession,
-    });
+      layout: false,
+    };
+
+    if (this.isHtmxRequest(req)) {
+      res.render("archive/_results", viewModel);
+      return;
+    }
+
+    res.render("archive/index", viewModel);
   }
 }
 
