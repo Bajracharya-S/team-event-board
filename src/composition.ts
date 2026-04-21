@@ -72,6 +72,6 @@ const attendeeRepo = new InMemoryAttendeeRepository(rsvpRepo)
 const attendeeService = CreateAttendeeService(attendeeRepo, eventRepo)  // add eventRepo
 const attendeeController = CreateAttendeeController(attendeeService, resolvedLogger)
 
-  return CreateApp(authController, archiveController, commentController, eventCreationController, rsvpController, saveController, resolvedLogger, attendeeController, eventService, authUsers);
+  return CreateApp(authController, archiveController, commentController, commentService, eventCreationController, rsvpController, saveController, resolvedLogger, attendeeController, eventService, eventRepo, authUsers);
 }
 
