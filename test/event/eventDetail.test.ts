@@ -74,3 +74,38 @@ describe("GET /events/:id", () => {
         expect(res.status).toBe(404);
     });
   });
+
+//Feature 5 Tests
+describe("POST /events/:id/publish", () => {
+    it("returns 302 and publishes a draft event as organizer", async () => {
+      const cookie = await loginAs("staff@app.test", "password123");
+      const res = await request(app)
+        .post("/events/event-5/publish")
+        .set("Cookie", cookie);
+      expect(res.status).toBe(302);
+    });
+  
+    it("returns 400 when trying to publish an already published event", async () => {
+      const cookie = await loginAs("staff@app.test", "password123");
+      const res = await request(app)
+        .post("/events/event-1/publish")
+        .set("Cookie", cookie);
+      expect(res.status).toBe(400);
+    });
+  
+    it("returns 403 when a user tries to publish", async () => {
+      const cookie = await loginAs("user@app.test", "password123");
+      const res = await request(app)
+        .post("/events/event-5/publish")
+        .set("Cookie", cookie);
+      expect(res.status).toBe(403);
+    });
+  
+    it("returns 404 when publishing a non-existent event", async () => {
+      const cookie = await loginAs("staff@app.test", "password123");
+      const res = await request(app)
+        .post("/events/non-existent-id/publish")
+        .set("Cookie", cookie);
+      expect(res.status).toBe(404);
+    });
+  });
