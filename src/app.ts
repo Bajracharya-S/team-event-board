@@ -367,19 +367,18 @@ class ExpressApp implements IApp {
       }),
     );
   this.app.get(
-    "/events/:id/attendees",
-    asyncHandler(async (req, res) => {
-      if (!this.requireRole(req, res, ["admin"], "Only admins can view attendees.")) {
-        return;
-      }
-      const browserSession = recordPageView(sessionStore(req));
-      const id = typeof req.params.id === 'string' ? req.params.id : req.params.id[0]
-      if (!id) {
-        res.status(400).render("partials/error", { message: "Invalid ID.", layout: false });
-        return;
-      }
-      await this.attendeeController.showAttendees(res, id, browserSession);
-    }),
+  "/events/:id/attendees/partial",
+  asyncHandler(async (req, res) => {
+    if (!this.requireAuthenticated(req, res)) return;
+    const currentUser = getAuthenticatedUser(sessionStore(req));
+    if (!currentUser) return;
+    const id = typeof req.params.id === 'string' ? req.params.id : req.params.id[0];
+    if (!id) {
+      res.status(400).render("partials/error", { message: "Invalid ID.", layout: false });
+      return;
+    }
+    await this.attendeeController.showAttendeesPartial(res, id, touchAppSession(sessionStore(req)));
+  }),
 );
 
     // ── Authenticated home page ──────────────────────────────────────
