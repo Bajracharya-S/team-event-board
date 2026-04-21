@@ -5,6 +5,7 @@ import Layouts from "express-ejs-layouts";
 import { IAuthController } from "./auth/AuthController";
 import { IArchiveController } from "./archive/ArchiveController";
 import { ICommentController } from "./comment/CommentController";
+import type { ICommentService } from "./comment/CommentService";
 import { IEventCreationController } from "./event-creation/EventCreationController";
 import { IRSVPController } from "./rsvp/RSVPController";
 import { ISaveController } from "./saveForLater/saveController";
@@ -27,6 +28,7 @@ import { ILoggingService } from "./service/LoggingService";
 import type { IEventService } from "./event/EventService";
 import type { EventError } from "./event/errors";
 import type { IUserRepository } from "./auth/UserRepository";
+import type { IEventRepository } from "./event/EventRepository";
 
 
 
@@ -51,12 +53,14 @@ class ExpressApp implements IApp {
     private readonly authController: IAuthController,
     private readonly archiveController: IArchiveController,
     private readonly commentController: ICommentController,
+    private readonly commentService: ICommentService,
     private readonly eventCreationController: IEventCreationController,
     private readonly rsvpController: IRSVPController,
     private readonly saveController: ISaveController,
     private readonly attendeeController: IAttendeeController,
     private readonly logger: ILoggingService,
     private readonly eventService: IEventService,
+    private readonly eventRepository: IEventRepository,
     private readonly userRepository: IUserRepository,
 
 
@@ -393,6 +397,52 @@ class ExpressApp implements IApp {
         res.render("home", { session: browserSession, pageError: null });
       }),
     );
+
+    // ── Events list (dashboard) ─────────────────────────────────────
+
+    this.app.get(
+      "/events",
+      asyncHandler(async (req, res) => {
+        if (!this.requireAuthenticated(req, res)) {
+          return;
+        }
+
+        const browserSession = recordPageView(sessionStore(req));
+        const currentUser = getAuthenticatedUser(sessionStore(req));
+        if (!currentUser) {
+          res.redirect("/login");
+          return;
+        }
+
+        this.logger.info(`GET /events for ${browserSession.browserLabel}`);
+
+        const eventsResult = await this.eventRepository.findAll();
+        if (!eventsResult.ok) {
+          res.status(500).render("partials/error", {
+            message: "Unable to load events.",
+            layout: false,
+          });
+          return;
+        }
+
+        const events = eventsResult.value
+          .filter((e) => {
+            if (currentUser.role === "admin") return true;
+            if (currentUser.role === "staff") {
+              if (e.status === "draft") return e.organizerId === currentUser.userId;
+              return true;
+            }
+            return e.status !== "draft";
+          })
+          .sort((a, b) => a.startDatetime.getTime() - b.startDatetime.getTime());
+
+        res.render("events/index", {
+          session: browserSession,
+          currentUser,
+          events,
+        });
+      }),
+    );
     
     // ── Event Detail (FT2) & Publishing/Cancellation (FT5) ───────────
 
@@ -418,6 +468,12 @@ class ExpressApp implements IApp {
     
         const event = result.value;
         const browserSession = recordPageView(sessionStore(req));
+
+        const commentsResult =
+          event.status === "published"
+            ? await this.commentService.getComments(event.id)
+            : null;
+        const comments = commentsResult && commentsResult.ok ? commentsResult.value.comments : [];
     
         const organizerResult = await this.userRepository.findById(event.organizerId);
         const organizerName = organizerResult.ok && organizerResult.value
@@ -428,7 +484,7 @@ class ExpressApp implements IApp {
           ? await this.saveController.getSavedEventIds(currentUser.userId)
           : []
 
-          res.render("eventDetail", { event, currentUser, organizerName, pageError: null, session: browserSession, savedEventIds });
+          res.render("eventDetail", { event, currentUser, organizerName, comments, pageError: null, session: browserSession, savedEventIds });
         }),
     );
     
@@ -508,14 +564,16 @@ export function CreateApp(
 
   archiveController: IArchiveController,
   commentController: ICommentController,
+  commentService: ICommentService,
   eventCreationController: IEventCreationController,
   rsvpController: IRSVPController,
   saveController: ISaveController,
   logger: ILoggingService,
   attendeeController: IAttendeeController,
   eventService: IEventService,
+  eventRepository: IEventRepository,
   userRepository: IUserRepository,
 
 ): IApp {
-  return new ExpressApp(authController, archiveController, commentController, eventCreationController, rsvpController, saveController, attendeeController, logger, eventService, userRepository);
+  return new ExpressApp(authController, archiveController, commentController, commentService, eventCreationController, rsvpController, saveController, attendeeController, logger, eventService, eventRepository, userRepository);
 }
