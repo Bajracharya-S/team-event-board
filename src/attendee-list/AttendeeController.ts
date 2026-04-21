@@ -5,11 +5,8 @@ import type { IAttendeeService, AttendeeError} from './AttendeeService'
 
 
 export interface IAttendeeController {
-  showAttendees(
-    res: Response,
-    eventId: string,
-    session: IAppBrowserSession,
-  ): Promise<void>
+  showAttendees(res: Response, eventId: string, session: IAppBrowserSession): Promise<void>
+  showAttendeesPartial(res: Response, eventId: string, session: IAppBrowserSession): Promise<void>
 }
 
 class AttendeeController implements IAttendeeController {
@@ -48,6 +45,27 @@ class AttendeeController implements IAttendeeController {
       session,
     })
   }
+  async showAttendeesPartial(
+  res: Response,
+  eventId: string,
+  session: IAppBrowserSession,
+): Promise<void> {
+  const user = session.authenticatedUser
+  if (!user) {
+    res.status(401).render('partials/error', { message: 'Unauthorized.', layout: false })
+    return
+  }
+
+  const result = await this.service.getGroupedAttendees(eventId, user.userId, user.role)
+  if (!result.ok) {
+    const error = result.value as AttendeeError
+    const status = error.name === 'EventNotFound' ? 404 : 403
+    res.status(status).render('partials/error', { message: error.message, layout: false })
+    return
+  }
+
+  res.render('attendeesPartial', { attendees: result.value, layout: false })
+}
 }
 
 export function CreateAttendeeController(
