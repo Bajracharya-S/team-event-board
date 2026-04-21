@@ -15,6 +15,15 @@ class CommentController implements ICommentController {
     private readonly logger: ILoggingService,
   ) {}
 
+  private isHtmxRequest(req: Request): boolean {
+    return req.get("HX-Request") === "true";
+  }
+
+  private retargetHtmxError(res: Response, selector: string): void {
+    res.set("HX-Retarget", selector);
+    res.set("HX-Reswap", "innerHTML");
+  }
+
   async postComment(req: Request, res: Response): Promise<void> {
     const store = req.session as AppSessionStore;
     const user = getAuthenticatedUser(store);
@@ -32,6 +41,10 @@ class CommentController implements ICommentController {
 
     if (result.ok === false) {
       const error = result.value;
+
+      if (this.isHtmxRequest(req)) {
+        this.retargetHtmxError(res, "#comment-errors");
+      }
 
       if (error.name === "UnauthorizedError") {
         res.status(401).render("partials/error", { message: error.message, layout: false });
@@ -58,13 +71,14 @@ class CommentController implements ICommentController {
     }
 
     const commentsResult = await this.commentService.getComments(eventId);
-    const comments = commentsResult.ok ? commentsResult.value : [];
+    const comments = commentsResult.ok ? commentsResult.value.comments : [];
+    const eventOrganizerId = commentsResult.ok ? commentsResult.value.eventOrganizerId : "";
 
     res.status(201).render("partials/comment-list", {
       comments,
       currentUserId: user?.userId ?? "",
       currentUserRole: user?.role ?? "",
-      eventOrganizerId: "",
+      eventOrganizerId,
       layout: false,
     });
   }
@@ -86,6 +100,10 @@ class CommentController implements ICommentController {
     if (result.ok === false) {
       const error = result.value;
 
+      if (this.isHtmxRequest(req)) {
+        this.retargetHtmxError(res, "#comment-errors");
+      }
+
       if (error.name === "UnauthorizedError") {
         res.status(403).render("partials/error", { message: error.message, layout: false });
         return;
@@ -103,13 +121,14 @@ class CommentController implements ICommentController {
     }
 
     const commentsResult = await this.commentService.getComments(eventId);
-    const comments = commentsResult.ok ? commentsResult.value : [];
+    const comments = commentsResult.ok ? commentsResult.value.comments : [];
+    const eventOrganizerId = commentsResult.ok ? commentsResult.value.eventOrganizerId : "";
 
     res.status(200).render("partials/comment-list", {
       comments,
       currentUserId: user?.userId ?? "",
       currentUserRole: user?.role ?? "",
-      eventOrganizerId: "",
+      eventOrganizerId,
       layout: false,
     });
   }

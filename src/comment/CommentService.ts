@@ -22,7 +22,9 @@ export interface ICommentService {
     authorDisplayName: string,
     content: string,
   ): Promise<Result<IComment, CommentError>>;
-  getComments(eventId: string): Promise<Result<IComment[], CommentError>>;
+  getComments(
+    eventId: string,
+  ): Promise<Result<{ comments: IComment[]; eventOrganizerId: string }, CommentError>>;
   deleteComment(
     commentId: string,
     userId: string,
@@ -84,7 +86,9 @@ class CommentService implements ICommentService {
     return Ok(createResult.value);
   }
 
-  async getComments(eventId: string): Promise<Result<IComment[], CommentError>> {
+  async getComments(
+    eventId: string,
+  ): Promise<Result<{ comments: IComment[]; eventOrganizerId: string }, CommentError>> {
     const eventResult = await this.eventRepo.findById(eventId);
     if (eventResult.ok === false) {
       return Err(UnexpectedError(eventResult.value.message));
@@ -96,12 +100,14 @@ class CommentService implements ICommentService {
       return Err(EventNotPublishedError("Comments are only visible on published events."));
     }
 
+    const eventOrganizerId = eventResult.value.organizerId;
+
     const commentsResult = await this.commentRepo.findByEventId(eventId);
     if (commentsResult.ok === false) {
       return Err(UnexpectedError(commentsResult.value.message));
     }
 
-    return Ok(commentsResult.value);
+    return Ok({ comments: commentsResult.value, eventOrganizerId });
   }
 
   async deleteComment(

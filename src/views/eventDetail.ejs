@@ -37,3 +37,26 @@
 <% if (pageError) { %>
   <p style="color: red;"><%= pageError %></p>
 <% } %>
+
+<% if (event.status === 'published') { %>
+  <hr class="my-6 border-slate-200" />
+  <section class="max-w-3xl">
+    <h2 class="text-xl font-semibold mb-3">Comments</h2>
+    <div id="comment-errors" class="mb-3"></div>
+    <%- include("partials/comment-form", { eventId: event.id }) %>
+    <div class="mt-4">
+      <%- include("partials/comment-list", {
+        comments,
+        currentUserId: currentUser.userId,
+        currentUserRole: currentUser.role,
+        eventOrganizerId: event.organizerId,
+      }) %>
+    </div>
+  </section>
+<% } else { %>
+  <hr class="my-6 border-slate-200" />
+  <section class="max-w-3xl">
+    <h2 class="text-xl font-semibold mb-2">Comments</h2>
+    <p class="text-slate-500 text-sm m-0">Comments are only available for published events.</p>
+  </section>
+<% } %>
