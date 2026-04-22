@@ -19,6 +19,10 @@ class EventCreationController implements IEventCreationController {
     private readonly logger: ILoggingService,
   ) {}
 
+  private isHtmx(req: Request): boolean {
+    return req.get("HX-Request") === "true";
+  }
+
   async showForm(req: Request, res: Response): Promise<void> {
     const store = req.session as AppSessionStore;
     const session = recordPageView(store);
@@ -35,6 +39,7 @@ class EventCreationController implements IEventCreationController {
   async handleCreate(req: Request, res: Response): Promise<void> {
     const store = req.session as AppSessionStore;
     const user = getAuthenticatedUser(store);
+    const htmx = this.isHtmx(req);
 
     if (!user) {
       res.status(401).render("partials/error", {
@@ -66,6 +71,16 @@ class EventCreationController implements IEventCreationController {
       const error = result.value;
       const status = error.name === "UnauthorizedError" ? 403 : 400;
 
+      if (htmx) {
+        res.status(status).render("events/form-body", {
+          categories: VALID_CATEGORIES,
+          formData: req.body,
+          formError: error.message,
+          layout: false,
+        });
+        return;
+      }
+
       const session = recordPageView(store);
       res.status(status).render("events/new", {
         session,
@@ -73,6 +88,12 @@ class EventCreationController implements IEventCreationController {
         formData: req.body,
         formError: error.message,
       });
+      return;
+    }
+
+    if (htmx) {
+      res.set("HX-Redirect", "/home");
+      res.status(204).send();
       return;
     }
 
