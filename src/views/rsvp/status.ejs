@@ -1,29 +1,36 @@
 <div id="rsvp-section">
-  <form method="post" action="/events/<%= eventId %>/rsvp">
-    <% if (status === "going") { %>
-      <button
-        type="submit"
-        class="px-4 py-2 rounded-lg bg-red-500 text-white font-medium cursor-pointer hover:bg-red-600 text-sm"
-      >
-        Cancel RSVP
-      </button>
-      <span class="ml-2 text-sm text-slate-600">You are attending</span>
-    <% } else if (status === "waitlisted") { %>
-      <button
-        type="submit"
-        class="px-4 py-2 rounded-lg bg-yellow-500 text-white font-medium cursor-pointer hover:bg-yellow-600 text-sm"
-      >
-        Leave Waitlist
-      </button>
-      <span class="ml-2 text-sm text-slate-600">You are on the waitlist</span>
-    <% } else { %>
-      <button
-        type="submit"
-        class="px-4 py-2 rounded-lg bg-blue-600 text-white font-medium cursor-pointer hover:bg-blue-700 text-sm"
-      >
-        RSVP
-      </button>
-    <% } %>
-  </form>
+  <% if (status === "going") { %>
+    <button
+      type="button"
+      hx-post="/events/<%= eventId %>/rsvp"
+      hx-target="#rsvp-section"
+      hx-swap="outerHTML"
+      class="px-4 py-2 rounded-lg bg-red-500 text-white font-medium cursor-pointer hover:bg-red-600 text-sm"
+    >
+      Cancel RSVP
+    </button>
+    <span class="ml-2 text-sm text-slate-600">You are attending</span>
+  <% } else if (status === "waitlisted") { %>
+    <button
+      type="button"
+      hx-post="/events/<%= eventId %>/rsvp"
+      hx-target="#rsvp-section"
+      hx-swap="outerHTML"
+      class="px-4 py-2 rounded-lg bg-yellow-500 text-white font-medium cursor-pointer hover:bg-yellow-600 text-sm"
+    >
+      Leave Waitlist
+    </button>
+    <span class="ml-2 text-sm text-slate-600">You are on the waitlist</span>
+  <% } else { %>
+    <button
+      type="button"
+      hx-post="/events/<%= eventId %>/rsvp"
+      hx-target="#rsvp-section"
+      hx-swap="outerHTML"
+      class="px-4 py-2 rounded-lg bg-blue-600 text-white font-medium cursor-pointer hover:bg-blue-700 text-sm"
+    >
+      RSVP
+    </button>
+  <% } %>
   <p class="mt-2 text-sm text-slate-500"><%= attendeeCount %> attending</p>
 </div>
