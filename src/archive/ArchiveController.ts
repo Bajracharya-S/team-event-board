@@ -68,11 +68,10 @@ class ArchiveController implements IArchiveController {
       selectedCategory: category ?? "",
       validCategories: VALID_CATEGORIES,
       session: browserSession,
-      layout: false,
     };
 
     if (this.isHtmxRequest(req)) {
-      res.render("archive/_results", viewModel);
+      res.render("archive/_results", { ...viewModel, layout: false });
       return;
     }
 
