@@ -55,7 +55,7 @@
     <h2 class="text-xl font-semibold mb-3">Comments</h2>
     <div id="comment-errors" class="mb-3"></div>
     <%- include("partials/comment-form", { eventId: event.id }) %>
-    <div class="mt-4">
+    <div class="mt-4" id="comments-section">
       <%- include("partials/comment-list", {
         comments,
         currentUserId: currentUser.userId,
