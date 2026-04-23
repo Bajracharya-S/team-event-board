@@ -1,5 +1,5 @@
 <h1><%= event.title %></h1>
-<p><strong>Status:</strong> <%= event.status %></p>
+<p><strong>Status:</strong> <span id="event-status-badge-<%= event.id %>"><%= event.status %></span></p>
 <p><strong>Category:</strong> <%= event.category %></p>
 <p><strong>Location:</strong> <%= event.location %></p>
 <p><strong>Description:</strong> <%= event.description %></p>
@@ -9,20 +9,76 @@
 <p><strong>Attending:</strong> 0 / <%= event.capacity ?? 'Unlimited' %></p>
 
 <% if (currentUser.role === 'admin' || event.organizerId === currentUser.userId) { %>
-  <% if (event.status === 'draft') { %>
-    <form method="POST" action="/events/<%= event.id %>/publish">
-      <button type="submit">Publish Event</button>
-    </form>
-  <% } %>
-  <% if (event.status === 'published') { %>
-    <form method="POST" action="/events/<%= event.id %>/cancel">
-      <button type="submit">Cancel Event</button>
-    </form>
-  <% } %>
+  <div id="event-controls-<%= event.id %>">
+    <% if (event.status === 'draft') { %>
+      <form
+        hx-post="/events/<%= event.id %>/publish"
+        hx-target="#event-controls-<%= event.id %>"
+        hx-swap="outerHTML"
+      >
+        <button type="submit">Publish Event</button>
+      </form>
+    <% } %>
+    <% if (event.status === 'published') { %>
+      <form
+        hx-post="/events/<%= event.id %>/cancel"
+        hx-target="#event-controls-<%= event.id %>"
+        hx-swap="outerHTML"
+      >
+        <button type="submit">Cancel Event</button>
+      </form>
+
+            <div id="attendee-list">
+    <button
+      hx-get="/events/<%= event.id %>/attendees/partial"
+      hx-target="#attendee-list"
+      hx-swap="outerHTML"
+      class="px-4 py-2 rounded-lg bg-slate-600 text-white font-medium cursor-pointer hover:bg-slate-700 text-sm"
+    >
+      View Attendees
+    </button>
+    </div>
+    <% } %>
+  </div>
 <% } else { %>
-  <button>RSVP</button>
+  <div class="flex gap-2">
+  <button class="px-4 py-2 rounded-lg bg-blue-600 text-white font-medium cursor-pointer hover:bg-blue-700 text-sm">RSVP</button>
+  
+  <% if (event.status === 'published') { %>
+
+  <div id="save-btn-<%= event.id %>">
+    <%- include('saveButton', { 
+      eventId: event.id, 
+      isSaved: savedEventIds.includes(event.id) 
+    }) %>
+  </div>
+<% } %>
+</div>
 <% } %>
 
 <% if (pageError) { %>
   <p style="color: red;"><%= pageError %></p>
+<% } %>
+
+<% if (event.status === 'published') { %>
+  <hr class="my-6 border-slate-200" />
+  <section class="max-w-3xl">
+    <h2 class="text-xl font-semibold mb-3">Comments</h2>
+    <div id="comment-errors" class="mb-3"></div>
+    <%- include("partials/comment-form", { eventId: event.id }) %>
+    <div class="mt-4" id="comments-section">
+      <%- include("partials/comment-list", {
+        comments,
+        currentUserId: currentUser.userId,
+        currentUserRole: currentUser.role,
+        eventOrganizerId: event.organizerId,
+      }) %>
+    </div>
+  </section>
+<% } else { %>
+  <hr class="my-6 border-slate-200" />
+  <section class="max-w-3xl">
+    <h2 class="text-xl font-semibold mb-2">Comments</h2>
+    <p class="text-slate-500 text-sm m-0">Comments are only available for published events.</p>
+  </section>
 <% } %>

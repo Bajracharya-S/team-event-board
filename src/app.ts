@@ -5,6 +5,7 @@ import Layouts from "express-ejs-layouts";
 import { IAuthController } from "./auth/AuthController";
 import { IArchiveController } from "./archive/ArchiveController";
 import { ICommentController } from "./comment/CommentController";
+import type { ICommentService } from "./comment/CommentService";
 import { IEventCreationController } from "./event-creation/EventCreationController";
 import { IRSVPController } from "./rsvp/RSVPController";
 import { ISaveController } from "./saveForLater/saveController";
@@ -27,6 +28,7 @@ import { ILoggingService } from "./service/LoggingService";
 import type { IEventService } from "./event/EventService";
 import type { EventError } from "./event/errors";
 import type { IUserRepository } from "./auth/UserRepository";
+import type { IEventRepository } from "./event/EventRepository";
 
 
 
@@ -51,12 +53,14 @@ class ExpressApp implements IApp {
     private readonly authController: IAuthController,
     private readonly archiveController: IArchiveController,
     private readonly commentController: ICommentController,
+    private readonly commentService: ICommentService,
     private readonly eventCreationController: IEventCreationController,
     private readonly rsvpController: IRSVPController,
     private readonly saveController: ISaveController,
     private readonly attendeeController: IAttendeeController,
     private readonly logger: ILoggingService,
     private readonly eventService: IEventService,
+    private readonly eventRepository: IEventRepository,
     private readonly userRepository: IUserRepository,
 
 
@@ -304,8 +308,8 @@ class ExpressApp implements IApp {
         }
 
         const session = touchAppSession(sessionStore(req));
-        const id = Number(req.params.id);
-        if (!Number.isInteger(id) || id <= 0) {
+        const id = typeof req.params.id === 'string' ? req.params.id : req.params.id[0]
+        if (!id) {
           res.status(400).render("entries/partials/error", {
             message: "Invalid ID.",
             layout: false,
@@ -316,6 +320,17 @@ class ExpressApp implements IApp {
         await this.saveController.toggleSaveEvent(res, id, session);
       }),
     );
+
+    this.app.get(
+  "/profile/saved",
+  asyncHandler(async (req, res) => {
+    if (!this.requireRole(req, res, ["user"], "Only members have a saved list.")) {
+      return;
+    }
+    const browserSession = recordPageView(sessionStore(req));
+    await this.saveController.showSavedList(res, browserSession);
+  }),
+);
 
     // Event Creation (FT1) -----------------------------------
 
@@ -352,19 +367,18 @@ class ExpressApp implements IApp {
       }),
     );
   this.app.get(
-    "/events/:id/attendees",
-    asyncHandler(async (req, res) => {
-      if (!this.requireRole(req, res, ["admin"], "Only admins can view attendees.")) {
-        return;
-      }
-      const browserSession = recordPageView(sessionStore(req));
-      const id = typeof req.params.id === 'string' ? req.params.id : req.params.id[0]
-      if (!id) {
-        res.status(400).render("partials/error", { message: "Invalid ID.", layout: false });
-        return;
-      }
-      await this.attendeeController.showAttendees(res, id, browserSession);
-    }),
+  "/events/:id/attendees/partial",
+  asyncHandler(async (req, res) => {
+    if (!this.requireAuthenticated(req, res)) return;
+    const currentUser = getAuthenticatedUser(sessionStore(req));
+    if (!currentUser) return;
+    const id = typeof req.params.id === 'string' ? req.params.id : req.params.id[0];
+    if (!id) {
+      res.status(400).render("partials/error", { message: "Invalid ID.", layout: false });
+      return;
+    }
+    await this.attendeeController.showAttendeesPartial(res, id, touchAppSession(sessionStore(req)));
+  }),
 );
 
     // ── Authenticated home page ──────────────────────────────────────
@@ -380,6 +394,52 @@ class ExpressApp implements IApp {
         const browserSession = recordPageView(sessionStore(req));
         this.logger.info(`GET /home for ${browserSession.browserLabel}`);
         res.render("home", { session: browserSession, pageError: null });
+      }),
+    );
+
+    // ── Events list (dashboard) ─────────────────────────────────────
+
+    this.app.get(
+      "/events",
+      asyncHandler(async (req, res) => {
+        if (!this.requireAuthenticated(req, res)) {
+          return;
+        }
+
+        const browserSession = recordPageView(sessionStore(req));
+        const currentUser = getAuthenticatedUser(sessionStore(req));
+        if (!currentUser) {
+          res.redirect("/login");
+          return;
+        }
+
+        this.logger.info(`GET /events for ${browserSession.browserLabel}`);
+
+        const eventsResult = await this.eventRepository.findAll();
+        if (!eventsResult.ok) {
+          res.status(500).render("partials/error", {
+            message: "Unable to load events.",
+            layout: false,
+          });
+          return;
+        }
+
+        const events = eventsResult.value
+          .filter((e) => {
+            if (currentUser.role === "admin") return true;
+            if (currentUser.role === "staff") {
+              if (e.status === "draft") return e.organizerId === currentUser.userId;
+              return true;
+            }
+            return e.status !== "draft";
+          })
+          .sort((a, b) => a.startDatetime.getTime() - b.startDatetime.getTime());
+
+        res.render("events/index", {
+          session: browserSession,
+          currentUser,
+          events,
+        });
       }),
     );
     
@@ -407,14 +467,24 @@ class ExpressApp implements IApp {
     
         const event = result.value;
         const browserSession = recordPageView(sessionStore(req));
+
+        const commentsResult =
+          event.status === "published"
+            ? await this.commentService.getComments(event.id)
+            : null;
+        const comments = commentsResult && commentsResult.ok ? commentsResult.value.comments : [];
     
         const organizerResult = await this.userRepository.findById(event.organizerId);
         const organizerName = organizerResult.ok && organizerResult.value
           ? organizerResult.value.displayName
           : "Unknown";
-    
-        res.render("eventDetail", { event, currentUser, organizerName, pageError: null, session: browserSession });
-      }),
+        
+        const savedEventIds = currentUser.role === 'user'
+          ? await this.saveController.getSavedEventIds(currentUser.userId)
+          : []
+
+          res.render("eventDetail", { event, currentUser, organizerName, comments, pageError: null, session: browserSession, savedEventIds });
+        }),
     );
     
     this.app.post(
@@ -437,6 +507,11 @@ class ExpressApp implements IApp {
             : error.kind === "InvalidTransition" ? 400
             : 500;
           res.status(status).render("partials/error", { message: error.message, layout: false });
+          return;
+        }
+    
+        if (this.isHtmxRequest(req)) {
+          res.render("partials/eventControls", { event: result.value, layout: false });
           return;
         }
     
@@ -467,6 +542,11 @@ class ExpressApp implements IApp {
           return;
         }
     
+        if (this.isHtmxRequest(req)) {
+          res.render("partials/eventControls", { event: result.value, layout: false });
+          return;
+        }
+    
         res.redirect(`/events/${result.value.id}`);
       }),
     );
@@ -493,14 +573,16 @@ export function CreateApp(
 
   archiveController: IArchiveController,
   commentController: ICommentController,
+  commentService: ICommentService,
   eventCreationController: IEventCreationController,
   rsvpController: IRSVPController,
   saveController: ISaveController,
   logger: ILoggingService,
   attendeeController: IAttendeeController,
   eventService: IEventService,
+  eventRepository: IEventRepository,
   userRepository: IUserRepository,
 
 ): IApp {
-  return new ExpressApp(authController, archiveController, commentController, eventCreationController, rsvpController, saveController, attendeeController, logger, eventService, userRepository);
+  return new ExpressApp(authController, archiveController, commentController, commentService, eventCreationController, rsvpController, saveController, attendeeController, logger, eventService, eventRepository, userRepository);
 }

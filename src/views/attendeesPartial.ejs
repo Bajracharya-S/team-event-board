@@ -1,0 +1,28 @@
+<div id="attendee-list">
+  <% 
+    const groups = [
+      { label: 'Attending', key: 'going', color: 'green' },
+      { label: 'Waitlisted', key: 'waitlisted', color: 'yellow' },
+      { label: 'Cancelled', key: 'cancelled', color: 'red' },
+    ]
+  %>
+  <% groups.forEach(group => { %>
+    <div class="mt-4">
+      <h3 class="font-semibold text-<%= group.color %>-600">
+        <%= group.label %> (<%= attendees[group.key].length %>)
+      </h3>
+      <% if (attendees[group.key].length === 0) { %>
+        <p class="text-gray-400 text-sm">No one in this group.</p>
+      <% } else { %>
+        <ul class="space-y-2 mt-2">
+          <% attendees[group.key].forEach(entry => { %>
+            <li class="border rounded p-3 flex justify-between items-center">
+              <span class="font-medium"><%= entry.displayName %></span>
+              <span class="text-sm text-gray-500"><%= entry.rsvpedAt.toLocaleString() %></span>
+            </li>
+          <% }) %>
+        </ul>
+      <% } %>
+    </div>
+  <% }) %>
+</div>

@@ -1,6 +1,7 @@
 import { Ok, Err, type Result } from "../lib/result";
 import type { IEvent } from "../event/Event";
 import type { IEventRepository } from "../event/EventRepository";
+import { EVENT_CATEGORIES } from "../event/categories";
 import {
   ValidationError,
   InvalidTimeRangeError,
@@ -18,13 +19,7 @@ export type CreateEventInput = {
   capacity: number | null;
 };
 
-export const VALID_CATEGORIES = [
-  "social",
-  "educational",
-  "volunteer",
-  "sports",
-  "arts",
-] as const;
+export const VALID_CATEGORIES = EVENT_CATEGORIES;
 
 export interface IEventCreationService {
   createEvent(

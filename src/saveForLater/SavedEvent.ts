@@ -1,13 +1,13 @@
 export interface SavedEvent {
   id: number
   userId: string
-  eventId: number
+  eventId: string
   savedAt: Date
 }
 
 let nextId = 1
 
-export function createSavedEvent(userId: string, eventId: number): SavedEvent {
+export function createSavedEvent(userId: string, eventId: string): SavedEvent {
   return {
     id: nextId++,
     userId,
