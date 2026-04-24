@@ -32,11 +32,12 @@ class EventListController implements IEventListController {
 
     const result = await this.eventListService.listEvents(filters);
 
-    if (!result.ok) {
-      const status = result.value.name === "UnexpectedError" ? 500 : 400;
+    if (result.ok === false) {
+      const error = result.value;
+      const status = error.name === "UnexpectedError" ? 500 : 400;
 
       res.status(status).render("partials/error", {
-        message: result.value.message,
+        message: error.message,
         layout: false,
       });
       return;
