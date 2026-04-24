@@ -14,7 +14,14 @@
               </p>
             </div>
             <% if (currentUserId === comment.authorId || currentUserRole === "admin" || currentUserId === eventOrganizerId) { %>
-              <form method="POST" action="/comments/<%= comment.id %>/delete" class="m-0 shrink-0">
+              <form
+                method="POST"
+                action="/comments/<%= comment.id %>/delete"
+                hx-post="/comments/<%= comment.id %>/delete"
+                hx-target="#comment-list"
+                hx-swap="outerHTML"
+                class="m-0 shrink-0"
+              >
                 <input type="hidden" name="eventId" value="<%= comment.eventId %>" />
                 <button
                   type="submit"

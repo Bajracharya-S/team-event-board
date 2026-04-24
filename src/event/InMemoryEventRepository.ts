@@ -18,7 +18,7 @@ const SEED_EVENTS: IEvent[] = [
     title: "Team Kickoff 2024",
     description: "Annual team kickoff meeting.",
     location: "Main Hall",
-    category: "meeting",
+    category: "educational",
     status: "published",
     capacity: null,
     startDatetime: past(10),
@@ -32,7 +32,7 @@ const SEED_EVENTS: IEvent[] = [
     title: "Hackathon Spring",
     description: "24-hour hackathon open to all members.",
     location: "Lab Room B",
-    category: "hackathon",
+    category: "educational",
     status: "published",
     capacity: 30,
     startDatetime: past(5),
@@ -46,7 +46,7 @@ const SEED_EVENTS: IEvent[] = [
     title: "Workshop: Intro to TypeScript",
     description: "Beginner-friendly TypeScript workshop.",
     location: "Room 101",
-    category: "workshop",
+    category: "educational",
     status: "published",
     capacity: 20,
     startDatetime: past(2),
@@ -74,7 +74,7 @@ const SEED_EVENTS: IEvent[] = [
     title: "Sprint Planning",
     description: "Sprint 2 planning session.",
     location: "Online",
-    category: "meeting",
+    category: "educational",
     status: "draft",
     capacity: null,
     startDatetime: future(7),
@@ -87,9 +87,25 @@ const SEED_EVENTS: IEvent[] = [
 
 class InMemoryEventRepository implements IEventRepository {
   private readonly events: Map<string, IEvent>;
+  private nextEventId: number;
 
   constructor(seed: IEvent[]) {
     this.events = new Map(seed.map((e) => [e.id, { ...e }]));
+    
+    this.nextEventId = 1;
+    for (const event of seed) {
+      const match = event.id.match(/event-(\d+)/);
+      if (match) {
+        const num = parseInt(match[1], 10);
+        if (num >= this.nextEventId) {
+          this.nextEventId = num + 1;
+        }
+      }
+    }
+  }
+
+  generateEventId(): string {
+    return `event-${this.nextEventId++}`;
   }
 
   async findAll(): Promise<Result<IEvent[], EventRepositoryError>> {

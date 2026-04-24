@@ -9,4 +9,5 @@ export interface IEventRepository {
   findByStatus(status: EventStatus): Promise<Result<IEvent[], EventRepositoryError>>;
   create(event: IEvent): Promise<Result<IEvent, EventRepositoryError>>;
   updateStatus(id: string, status: EventStatus): Promise<Result<IEvent | null, EventRepositoryError>>;
+  generateEventId(): string;
 }

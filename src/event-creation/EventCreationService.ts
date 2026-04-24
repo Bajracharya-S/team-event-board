@@ -1,13 +1,13 @@
 import { Ok, Err, type Result } from "../lib/result";
 import type { IEvent } from "../event/Event";
 import type { IEventRepository } from "../event/EventRepository";
+import { EVENT_CATEGORIES } from "../event/categories";
 import {
   ValidationError,
   InvalidTimeRangeError,
   UnauthorizedError,
   type EventCreationError,
 } from "./errors";
-import { randomUUID } from "node:crypto";
 
 export type CreateEventInput = {
   title: string;
@@ -19,13 +19,7 @@ export type CreateEventInput = {
   capacity: number | null;
 };
 
-export const VALID_CATEGORIES = [
-  "social",
-  "educational",
-  "volunteer",
-  "sports",
-  "arts",
-] as const;
+export const VALID_CATEGORIES = EVENT_CATEGORIES;
 
 export interface IEventCreationService {
   createEvent(
@@ -85,7 +79,7 @@ class EventCreationService implements IEventCreationService {
 
     const now = new Date();
     const event: IEvent = {
-      id: randomUUID(),
+      id: this.eventRepo.generateEventId(),
       title: input.title.trim(),
       description: input.description.trim(),
       location: input.location.trim(),

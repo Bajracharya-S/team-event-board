@@ -17,19 +17,19 @@ import { CreateRSVPService } from "./rsvp/RSVPService";
 import { CreateRSVPController } from "./rsvp/RSVPController";
 import { CreateEventCreationService } from "./event-creation/EventCreationService";
 import { CreateEventCreationController } from "./event-creation/EventCreationController";
-import { CreateEventListService } from "./event-list/EventListService";
-import { CreateEventListController } from "./event-list/EventListController";
 import { CreateLoggingService } from "./service/LoggingService";
+import {InMemoryAttendeeRepository} from "./attendee-list/AttendeeRepository"
+import {CreateAttendeeService} from "./attendee-list/AttendeeService"
+import {CreateAttendeeController} from "./attendee-list/AttendeeController"
 import type { ILoggingService } from "./service/LoggingService";
-import { InMemoryAttendeeRepository } from "./attendee-list/AttendeeRepository";
-import { CreateAttendeeService } from "./attendee-list/AttendeeService";
-import { CreateAttendeeController } from "./attendee-list/AttendeeController";
 import { CreateEventService } from "./event/EventService";
+import type { IEventService } from "./event/EventService";
+
+
+export let eventRepo: IEventRepository;
 import { InMemorySavedEventRepository } from "./saveForLater/SaveRepo";
 import { CreateSaveService } from "./saveForLater/SaveService";
 import { CreateSaveController } from "./saveForLater/saveController";
-
-export let eventRepo: IEventRepository;
 
 export function createComposedApp(logger?: ILoggingService): IApp {
   const resolvedLogger = logger ?? CreateLoggingService();
@@ -38,9 +38,6 @@ export function createComposedApp(logger?: ILoggingService): IApp {
   eventRepo = CreateInMemoryEventRepository();
   const eventService = CreateEventService(eventRepo);
 
-  // Ft(6,10) Event List / Search / Filter
-  const eventListService = CreateEventListService(eventRepo);
-  const eventListController = CreateEventListController(eventListService);
 
   // Archive
   const archiveService = CreateArchiveService(eventRepo);
@@ -60,37 +57,21 @@ export function createComposedApp(logger?: ILoggingService): IApp {
 
   // Ft(1) Event Creation
   const eventCreationService = CreateEventCreationService(eventRepo);
-  const eventCreationController = CreateEventCreationController(
-    eventCreationService,
-    resolvedLogger,
-  );
-
-  // Ft(4) RSVP
+  const eventCreationController = CreateEventCreationController(eventCreationService, resolvedLogger);
+// Ft(4) RSVP
   const rsvpRepo = CreateInMemoryRSVPRepository();
   const rsvpService = CreateRSVPService(rsvpRepo, eventRepo);
   const rsvpController = CreateRSVPController(rsvpService, resolvedLogger);
 
-  // Save for later
   const savedEventRepo = new InMemorySavedEventRepository();
   const saveService = CreateSaveService(savedEventRepo);
   const saveController = CreateSaveController(saveService, resolvedLogger);
 
-  // Attendee list
-  const attendeeRepo = new InMemoryAttendeeRepository(rsvpRepo)
-  const attendeeService = CreateAttendeeService(attendeeRepo, eventRepo)  // add eventRepo
-  const attendeeController = CreateAttendeeController(attendeeService, resolvedLogger)
-  
-  return CreateApp(
-    authController,
-    archiveController,
-    commentController,
-    eventCreationController,
-    rsvpController,
-    saveController,
-    eventListController,
-    resolvedLogger,
-    attendeeController,
-    eventService,
-    authUsers,
-  );
+
+const attendeeRepo = new InMemoryAttendeeRepository(rsvpRepo)
+const attendeeService = CreateAttendeeService(attendeeRepo, eventRepo)  // add eventRepo
+const attendeeController = CreateAttendeeController(attendeeService, resolvedLogger)
+
+  return CreateApp(authController, archiveController, commentController, commentService, eventCreationController, rsvpController, saveController, resolvedLogger, attendeeController, eventService, eventRepo, authUsers);
 }
+

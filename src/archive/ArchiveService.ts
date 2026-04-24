@@ -1,6 +1,7 @@
 import { Ok, Err, type Result } from "../lib/result";
 import type { IEvent } from "../event/Event";
 import type { IEventRepository } from "../event/EventRepository";
+import { EVENT_CATEGORIES } from "../event/categories";
 import {
   InvalidNowError,
   UnauthorizedError,
@@ -9,7 +10,7 @@ import {
   type ArchiveError,
 } from "./errors";
 
-export const VALID_CATEGORIES = ["meeting", "hackathon", "workshop", "social"] as const;
+export const VALID_CATEGORIES = EVENT_CATEGORIES;
 
 export type ValidCategory = (typeof VALID_CATEGORIES)[number];
 
