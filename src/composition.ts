@@ -6,8 +6,9 @@ import { CreatePasswordHasher } from "./auth/PasswordHasher";
 import { CreateApp } from "./app";
 import type { IApp } from "./contracts";
 
-import { CreateInMemoryEventRepository } from "./event/InMemoryEventRepository";
+import { CreatePrismaEventRepository } from "./event/PrismaEventRepository";
 import type { IEventRepository } from "./event/EventRepository";
+import { prisma } from "./lib/prisma";
 import { CreateEventService } from "./event/EventService";
 
 import { CreateEventListService } from "./event-list/EventListService";
@@ -43,7 +44,7 @@ export let eventRepo: IEventRepository;
 export function createComposedApp(logger?: ILoggingService): IApp {
   const resolvedLogger = logger ?? CreateLoggingService();
 
-  eventRepo = CreateInMemoryEventRepository();
+  eventRepo = CreatePrismaEventRepository(prisma);
 
   const eventService = CreateEventService(eventRepo);
   const eventListService = CreateEventListService(eventRepo);
