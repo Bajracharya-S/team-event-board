@@ -3,51 +3,121 @@
     <div>
       <h1 class="text-3xl font-bold text-slate-900 mb-1">Events</h1>
       <p class="text-slate-500 m-0">
-        Showing <strong class="text-slate-700"><%= events.length %></strong> event<%= events.length === 1 ? '' : 's' %> you can access.
+        Search and filter published upcoming events.
       </p>
     </div>
+
     <% if (currentUser.role === 'admin' || currentUser.role === 'staff') { %>
-      <a href="/events/new" class="text-blue-700 font-semibold no-underline hover:underline text-sm">+ Create Event</a>
+      <a href="/events/new" class="text-blue-700 font-semibold no-underline hover:underline text-sm">
+        + Create Event
+      </a>
     <% } %>
   </div>
 </section>
 
-<% if (events.length === 0) { %>
-  <section class="p-10 border border-slate-200 rounded-2xl bg-white shadow-sm text-center">
-    <p class="text-slate-400 text-lg m-0">No events available.</p>
-  </section>
-<% } else { %>
-  <ul class="space-y-3 list-none p-0 m-0">
-    <% events.forEach(function(event) { %>
-      <li class="p-5 border border-slate-200 rounded-2xl bg-white shadow-sm">
-        <div class="flex items-start justify-between gap-3 flex-wrap">
-          <div class="min-w-[240px]">
-            <h2 class="text-lg font-semibold text-slate-900 mb-1">
-              <a href="/events/<%= event.id %>" class="text-slate-900 no-underline hover:underline"><%= event.title %></a>
-            </h2>
-            <p class="text-slate-500 text-sm m-0 mb-2"><%= event.description %></p>
-            <div class="flex items-center gap-3 flex-wrap">
-              <span class="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 font-medium">
-                <%= event.category.charAt(0).toUpperCase() + event.category.slice(1) %>
-              </span>
-              <span class="text-xs text-slate-400"><%= event.location %></span>
-              <% if (event.organizerId === currentUser.userId) { %>
-                <span class="text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 font-semibold">Yours</span>
-              <% } %>
-            </div>
-          </div>
-          <div class="text-right shrink-0">
-            <span class="text-xs px-2.5 py-1 rounded-full bg-slate-100 text-slate-500 font-semibold uppercase tracking-wide">
-              <%= event.status %>
-            </span>
-            <p class="text-xs text-slate-400 mt-2 mb-0">
-              <%= new Date(event.startDatetime).toLocaleString("en-US", { year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }) %>
-              <span class="mx-1">&ndash;</span>
-              <%= new Date(event.endDatetime).toLocaleString("en-US", { year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }) %>
-            </p>
-          </div>
-        </div>
-      </li>
-    <% }) %>
-  </ul>
-<% } %>
+<section
+  class="mb-5 p-5 border border-slate-200 rounded-2xl bg-white shadow-sm"
+  x-data="{
+    query: '<%= filters.query || '' %>',
+    category: '<%= filters.category || '' %>',
+    timeframe: '<%= filters.timeframe || 'all' %>',
+    hasFilters() {
+      return this.query.length > 0 || this.category.length > 0 || this.timeframe !== 'all';
+    },
+    clearFilters() {
+      this.query = '';
+      this.category = '';
+      this.timeframe = 'all';
+      this.$nextTick(() => this.$refs.filterForm.requestSubmit());
+    }
+  }"
+>
+  <form
+    x-ref="filterForm"
+    method="GET"
+    action="/events"
+    class="grid grid-cols-1 md:grid-cols-[1fr_auto_auto_auto] gap-3 items-end"
+    hx-get="/events"
+    hx-target="#event-list"
+    hx-swap="innerHTML"
+    hx-push-url="true"
+  >
+    <div class="relative">
+      <label for="query" class="block text-sm font-semibold text-slate-700 mb-1">Search</label>
+      <input
+        x-model="query"
+        hx-trigger="keyup changed delay:400ms"
+        type="text"
+        id="query"
+        name="query"
+        value="<%= filters.query || '' %>"
+        placeholder="Search title, description, or location"
+        maxlength="100"
+        class="w-full rounded-xl border border-slate-300 px-4 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500"
+      />
+      <button
+        x-show="query.length > 0"
+        x-on:click.prevent="query = ''; $nextTick(() => $refs.filterForm.requestSubmit())"
+        type="button"
+        class="absolute right-3 bottom-2 text-slate-400 hover:text-slate-700"
+      >
+        ×
+      </button>
+    </div>
+
+    <div>
+      <label for="category" class="block text-sm font-semibold text-slate-700 mb-1">Category</label>
+      <select
+        x-model="category"
+        hx-trigger="change"
+        id="category"
+        name="category"
+        class="rounded-xl border border-slate-300 px-4 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+      >
+        <option value="">All Categories</option>
+        <option value="social">Social</option>
+        <option value="educational">Educational</option>
+        <option value="volunteer">Volunteer</option>
+        <option value="sports">Sports</option>
+        <option value="arts">Arts</option>
+      </select>
+    </div>
+
+    <div>
+      <label for="timeframe" class="block text-sm font-semibold text-slate-700 mb-1">Timeframe</label>
+      <select
+        x-model="timeframe"
+        hx-trigger="change"
+        id="timeframe"
+        name="timeframe"
+        class="rounded-xl border border-slate-300 px-4 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+      >
+        <option value="all">All Upcoming</option>
+        <option value="week">This Week</option>
+        <option value="weekend">This Weekend</option>
+      </select>
+    </div>
+
+    <div class="flex gap-2">
+      <button
+        type="submit"
+        class="px-4 py-2 rounded-xl bg-blue-700 text-white font-semibold hover:bg-blue-800"
+      >
+        Apply
+      </button>
+
+      <button
+        x-show="hasFilters()"
+        x-on:click.prevent="clearFilters()"
+        type="button"
+        class="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 font-semibold hover:bg-slate-200"
+      >
+        Clear
+      </button>
+    </div>
+  </form>
+</section>
+
+<section id="event-list">
+  <%- include("list", { events, filters, currentUser }) %>
+</section>
