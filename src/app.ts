@@ -2,6 +2,7 @@ import path from "node:path";
 import express, { Request, RequestHandler, Response } from "express";
 import session from "express-session";
 import Layouts from "express-ejs-layouts";
+
 import { IAuthController } from "./auth/AuthController";
 import { IArchiveController } from "./archive/ArchiveController";
 import { ICommentController } from "./comment/CommentController";
@@ -9,7 +10,8 @@ import type { ICommentService } from "./comment/CommentService";
 import { IEventCreationController } from "./event-creation/EventCreationController";
 import { IRSVPController } from "./rsvp/RSVPController";
 import { ISaveController } from "./saveForLater/saveController";
-import { IAttendeeController} from "./attendee-list/AttendeeController"
+import { IAttendeeController } from "./attendee-list/AttendeeController";
+import type { IEventListController } from "./event-list/EventListController";
 
 import {
   AuthenticationRequired,
@@ -29,10 +31,6 @@ import type { IEventService } from "./event/EventService";
 import type { EventError } from "./event/errors";
 import type { IUserRepository } from "./auth/UserRepository";
 import type { IEventRepository } from "./event/EventRepository";
-
-
-
-
 
 type AsyncRequestHandler = RequestHandler;
 
@@ -57,13 +55,12 @@ class ExpressApp implements IApp {
     private readonly eventCreationController: IEventCreationController,
     private readonly rsvpController: IRSVPController,
     private readonly saveController: ISaveController,
-    private readonly attendeeController: IAttendeeController,
     private readonly logger: ILoggingService,
+    private readonly attendeeController: IAttendeeController,
     private readonly eventService: IEventService,
     private readonly eventRepository: IEventRepository,
     private readonly userRepository: IUserRepository,
-
-
+    private readonly eventListController: IEventListController,
   ) {
     this.app = express();
     this.registerMiddleware();
@@ -72,7 +69,6 @@ class ExpressApp implements IApp {
   }
 
   private registerMiddleware(): void {
-    // Serve static files from src/static (create this directory to add your own assets)
     this.app.use(express.static(path.join(process.cwd(), "src/static")));
     this.app.use(
       session({
@@ -100,10 +96,6 @@ class ExpressApp implements IApp {
     return req.get("HX-Request") === "true";
   }
 
-  /**
-   * Middleware helper: returns true if the request is from an authenticated user.
-   * If the user is not authenticated, it handles the response (redirect or 401).
-   */
   private requireAuthenticated(req: Request, res: Response): boolean {
     const store = sessionStore(req);
     touchAppSession(store);
@@ -113,6 +105,7 @@ class ExpressApp implements IApp {
     }
 
     this.logger.warn("Blocked unauthenticated request to a protected route");
+
     if (this.isHtmxRequest(req) || req.method !== "GET") {
       res.status(401).render("partials/error", {
         message: AuthenticationRequired("Please log in to continue.").message,
@@ -125,11 +118,6 @@ class ExpressApp implements IApp {
     return false;
   }
 
-  /**
-   * Middleware helper: returns true if the authenticated user has one of the
-   * allowed roles. Calls requireAuthenticated first, so unauthenticated
-   * requests are handled automatically.
-   */
   private requireRole(
     req: Request,
     res: Response,
@@ -141,6 +129,7 @@ class ExpressApp implements IApp {
     }
 
     const currentUser = getAuthenticatedUser(sessionStore(req));
+
     if (currentUser && allowedRoles.includes(currentUser.role)) {
       return true;
     }
@@ -148,16 +137,16 @@ class ExpressApp implements IApp {
     this.logger.warn(
       `Blocked unauthorized request for role ${currentUser?.role ?? "unknown"}`,
     );
+
     res.status(403).render("partials/error", {
       message: AuthorizationRequired(message).message,
       layout: false,
     });
+
     return false;
   }
 
   private registerRoutes(): void {
-    // ── Public routes ────────────────────────────────────────────────
-
     this.app.get(
       "/",
       asyncHandler(async (req, res) => {
@@ -187,7 +176,13 @@ class ExpressApp implements IApp {
       asyncHandler(async (req, res) => {
         const email = typeof req.body.email === "string" ? req.body.email : "";
         const password = typeof req.body.password === "string" ? req.body.password : "";
-        await this.authController.loginFromForm(res, email, password, sessionStore(req));
+
+        await this.authController.loginFromForm(
+          res,
+          email,
+          password,
+          sessionStore(req),
+        );
       }),
     );
 
@@ -197,8 +192,6 @@ class ExpressApp implements IApp {
         await this.authController.logoutFromForm(res, sessionStore(req));
       }),
     );
-
-    // ── Admin routes ─────────────────────────────────────────────────
 
     this.app.get(
       "/admin/users",
@@ -248,6 +241,7 @@ class ExpressApp implements IApp {
 
         const session = touchAppSession(sessionStore(req));
         const currentUser = getAuthenticatedUser(sessionStore(req));
+
         if (!currentUser) {
           res.status(401).render("partials/error", {
             message: AuthenticationRequired("Please log in to continue.").message,
@@ -265,20 +259,16 @@ class ExpressApp implements IApp {
       }),
     );
 
-    // ── Archive (FT11) ───────────────────────────────────────────────
-
     this.app.get(
       "/archive",
-
       asyncHandler(async (req, res) => {
         if (!this.requireAuthenticated(req, res)) {
           return;
         }
+
         await this.archiveController.showArchive(req, res);
       }),
     );
-
-    // ── Comments (FT13) ─────────────────────────────────────────────
 
     this.app.post(
       "/events/:eventId/comments",
@@ -286,6 +276,7 @@ class ExpressApp implements IApp {
         if (!this.requireAuthenticated(req, res)) {
           return;
         }
+
         await this.commentController.postComment(req, res);
       }),
     );
@@ -296,21 +287,23 @@ class ExpressApp implements IApp {
         if (!this.requireAuthenticated(req, res)) {
           return;
         }
+
         await this.commentController.deleteComment(req, res);
-  })
-);
+      }),
+    );
 
     this.app.post(
-      "/events/:id/saveToggle", asyncHandler(async (req, res) => {
-
+      "/events/:id/saveToggle",
+      asyncHandler(async (req, res) => {
         if (!this.requireRole(req, res, ["user"], "Only users can save events.")) {
-          return;                           
+          return;
         }
 
         const session = touchAppSession(sessionStore(req));
-        const id = typeof req.params.id === 'string' ? req.params.id : req.params.id[0]
+        const id = typeof req.params.id === "string" ? req.params.id : "";
+
         if (!id) {
-          res.status(400).render("entries/partials/error", {
+          res.status(400).render("partials/error", {
             message: "Invalid ID.",
             layout: false,
           });
@@ -322,24 +315,31 @@ class ExpressApp implements IApp {
     );
 
     this.app.get(
-  "/profile/saved",
-  asyncHandler(async (req, res) => {
-    if (!this.requireRole(req, res, ["user"], "Only members have a saved list.")) {
-      return;
-    }
-    const browserSession = recordPageView(sessionStore(req));
-    await this.saveController.showSavedList(res, browserSession);
-  }),
-);
+      "/profile/saved",
+      asyncHandler(async (req, res) => {
+        if (!this.requireRole(req, res, ["user"], "Only members have a saved list.")) {
+          return;
+        }
 
-    // Event Creation (FT1) -----------------------------------
+        const browserSession = recordPageView(sessionStore(req));
+        await this.saveController.showSavedList(res, browserSession);
+      }),
+    );
 
     this.app.get(
       "/events/new",
       asyncHandler(async (req, res) => {
-        if (!this.requireRole(req, res, ["admin", "staff"], "Only organizers can create events.")) {
+        if (
+          !this.requireRole(
+            req,
+            res,
+            ["admin", "staff"],
+            "Only organizers can create events.",
+          )
+        ) {
           return;
         }
+
         await this.eventCreationController.showForm(req, res);
       }),
     );
@@ -347,15 +347,20 @@ class ExpressApp implements IApp {
     this.app.post(
       "/events",
       asyncHandler(async (req, res) => {
-        if (!this.requireRole(req, res, ["admin", "staff"], "Only organizers can create events.")) {
+        if (
+          !this.requireRole(
+            req,
+            res,
+            ["admin", "staff"],
+            "Only organizers can create events.",
+          )
+        ) {
           return;
         }
+
         await this.eventCreationController.handleCreate(req, res);
       }),
     );
-
-
-    // -- RSVP Toggle (FT4)
 
     this.app.post(
       "/events/:eventId/rsvp",
@@ -363,26 +368,35 @@ class ExpressApp implements IApp {
         if (!this.requireAuthenticated(req, res)) {
           return;
         }
+
         await this.rsvpController.toggle(req, res);
       }),
     );
-  this.app.get(
-  "/events/:id/attendees/partial",
-  asyncHandler(async (req, res) => {
-    if (!this.requireAuthenticated(req, res)) return;
-    const currentUser = getAuthenticatedUser(sessionStore(req));
-    if (!currentUser) return;
-    const id = typeof req.params.id === 'string' ? req.params.id : req.params.id[0];
-    if (!id) {
-      res.status(400).render("partials/error", { message: "Invalid ID.", layout: false });
-      return;
-    }
-    await this.attendeeController.showAttendeesPartial(res, id, touchAppSession(sessionStore(req)));
-  }),
-);
 
-    // ── Authenticated home page ──────────────────────────────────────
-    // TODO: Replace this placeholder with your project's main page.
+    this.app.get(
+      "/events/:id/attendees/partial",
+      asyncHandler(async (req, res) => {
+        if (!this.requireAuthenticated(req, res)) {
+          return;
+        }
+
+        const id = typeof req.params.id === "string" ? req.params.id : "";
+
+        if (!id) {
+          res.status(400).render("partials/error", {
+            message: "Invalid ID.",
+            layout: false,
+          });
+          return;
+        }
+
+        await this.attendeeController.showAttendeesPartial(
+          res,
+          id,
+          touchAppSession(sessionStore(req)),
+        );
+      }),
+    );
 
     this.app.get(
       "/home",
@@ -393,11 +407,13 @@ class ExpressApp implements IApp {
 
         const browserSession = recordPageView(sessionStore(req));
         this.logger.info(`GET /home for ${browserSession.browserLabel}`);
-        res.render("home", { session: browserSession, pageError: null });
+
+        res.render("home", {
+          session: browserSession,
+          pageError: null,
+        });
       }),
     );
-
-    // ── Events list (dashboard) ─────────────────────────────────────
 
     this.app.get(
       "/events",
@@ -408,6 +424,7 @@ class ExpressApp implements IApp {
 
         const browserSession = recordPageView(sessionStore(req));
         const currentUser = getAuthenticatedUser(sessionStore(req));
+
         if (!currentUser) {
           res.redirect("/login");
           return;
@@ -415,56 +432,45 @@ class ExpressApp implements IApp {
 
         this.logger.info(`GET /events for ${browserSession.browserLabel}`);
 
-        const eventsResult = await this.eventRepository.findAll();
-        if (!eventsResult.ok) {
-          res.status(500).render("partials/error", {
-            message: "Unable to load events.",
-            layout: false,
-          });
-          return;
-        }
-
-        const events = eventsResult.value
-          .filter((e) => {
-            if (currentUser.role === "admin") return true;
-            if (currentUser.role === "staff") {
-              if (e.status === "draft") return e.organizerId === currentUser.userId;
-              return true;
-            }
-            return e.status !== "draft";
-          })
-          .sort((a, b) => a.startDatetime.getTime() - b.startDatetime.getTime());
-
-        res.render("events/index", {
-          session: browserSession,
+        await this.eventListController.listEvents(
+          req,
+          res,
+          browserSession,
           currentUser,
-          events,
-        });
+        );
       }),
     );
-    
-    // ── Event Detail (FT2) & Publishing/Cancellation (FT5) ───────────
 
     this.app.get(
       "/events/:id",
       asyncHandler(async (req, res) => {
-        if (!this.requireAuthenticated(req, res)) return;
+        if (!this.requireAuthenticated(req, res)) {
+          return;
+        }
+
         const currentUser = getAuthenticatedUser(sessionStore(req));
-        if (!currentUser) return;
-    
+
+        if (!currentUser) {
+          return;
+        }
+
         const id = req.params.id as string;
         const result = await this.eventService.getEventById(id, {
           userId: currentUser.userId,
           role: currentUser.role,
         });
-    
-        if (!result.ok) {
+
+        if (result.ok === false) {
           const error = result.value as EventError;
           const status = error.kind === "EventNotFound" ? 404 : 500;
-          res.status(status).render("partials/error", { message: error.message, layout: false });
+
+          res.status(status).render("partials/error", {
+            message: error.message,
+            layout: false,
+          });
           return;
         }
-    
+
         const event = result.value;
         const browserSession = recordPageView(sessionStore(req));
 
@@ -472,95 +478,143 @@ class ExpressApp implements IApp {
           event.status === "published"
             ? await this.commentService.getComments(event.id)
             : null;
-        const comments = commentsResult && commentsResult.ok ? commentsResult.value.comments : [];
-    
-        const organizerResult = await this.userRepository.findById(event.organizerId);
-        const organizerName = organizerResult.ok && organizerResult.value
-          ? organizerResult.value.displayName
-          : "Unknown";
-        
-        const savedEventIds = currentUser.role === 'user'
-          ? await this.saveController.getSavedEventIds(currentUser.userId)
-          : []
 
-          res.render("eventDetail", { event, currentUser, organizerName, comments, pageError: null, session: browserSession, savedEventIds });
-        }),
+        const comments =
+          commentsResult && commentsResult.ok ? commentsResult.value.comments : [];
+
+        const organizerResult = await this.userRepository.findById(event.organizerId);
+
+        const organizerName =
+          organizerResult.ok && organizerResult.value
+            ? organizerResult.value.displayName
+            : "Unknown";
+
+        const savedEventIds =
+          currentUser.role === "user"
+            ? await this.saveController.getSavedEventIds(currentUser.userId)
+            : [];
+
+        res.render("eventDetail", {
+          event,
+          currentUser,
+          organizerName,
+          comments,
+          pageError: null,
+          session: browserSession,
+          savedEventIds,
+        });
+      }),
     );
-    
+
     this.app.post(
       "/events/:id/publish",
       asyncHandler(async (req, res) => {
-        if (!this.requireAuthenticated(req, res)) return;
+        if (!this.requireAuthenticated(req, res)) {
+          return;
+        }
+
         const currentUser = getAuthenticatedUser(sessionStore(req));
-        if (!currentUser) return;
-    
+
+        if (!currentUser) {
+          return;
+        }
+
         const id = req.params.id as string;
         const result = await this.eventService.publishEvent(id, {
           userId: currentUser.userId,
           role: currentUser.role,
         });
-    
-        if (!result.ok) {
+
+        if (result.ok === false) {
           const error = result.value as EventError;
-          const status = error.kind === "EventNotFound" ? 404
-            : error.kind === "Forbidden" ? 403
-            : error.kind === "InvalidTransition" ? 400
-            : 500;
-          res.status(status).render("partials/error", { message: error.message, layout: false });
+          const status =
+            error.kind === "EventNotFound"
+              ? 404
+              : error.kind === "Forbidden"
+                ? 403
+                : error.kind === "InvalidTransition"
+                  ? 400
+                  : 500;
+
+          res.status(status).render("partials/error", {
+            message: error.message,
+            layout: false,
+          });
           return;
         }
-    
+
         if (this.isHtmxRequest(req)) {
-          res.render("partials/eventControls", { event: result.value, layout: false });
+          res.render("partials/eventControls", {
+            event: result.value,
+            layout: false,
+          });
           return;
         }
-    
+
         res.redirect(`/events/${result.value.id}`);
       }),
     );
-    
+
     this.app.post(
       "/events/:id/cancel",
       asyncHandler(async (req, res) => {
-        if (!this.requireAuthenticated(req, res)) return;
+        if (!this.requireAuthenticated(req, res)) {
+          return;
+        }
+
         const currentUser = getAuthenticatedUser(sessionStore(req));
-        if (!currentUser) return;
-    
+
+        if (!currentUser) {
+          return;
+        }
+
         const id = req.params.id as string;
         const result = await this.eventService.cancelEvent(id, {
           userId: currentUser.userId,
           role: currentUser.role,
         });
-    
-        if (!result.ok) {
+
+        if (result.ok === false) {
           const error = result.value as EventError;
-          const status = error.kind === "EventNotFound" ? 404
-            : error.kind === "Forbidden" ? 403
-            : error.kind === "InvalidTransition" ? 400
-            : 500;
-          res.status(status).render("partials/error", { message: error.message, layout: false });
+          const status =
+            error.kind === "EventNotFound"
+              ? 404
+              : error.kind === "Forbidden"
+                ? 403
+                : error.kind === "InvalidTransition"
+                  ? 400
+                  : 500;
+
+          res.status(status).render("partials/error", {
+            message: error.message,
+            layout: false,
+          });
           return;
         }
-    
+
         if (this.isHtmxRequest(req)) {
-          res.render("partials/eventControls", { event: result.value, layout: false });
+          res.render("partials/eventControls", {
+            event: result.value,
+            layout: false,
+          });
           return;
         }
-    
+
         res.redirect(`/events/${result.value.id}`);
       }),
     );
 
-    // ── Error handler ────────────────────────────────────────────────
+    this.app.use(
+      (err: unknown, _req: Request, res: Response, _next: (value?: unknown) => void) => {
+        const message = err instanceof Error ? err.message : "Unexpected server error.";
+        this.logger.error(message);
 
-    this.app.use((err: unknown, _req: Request, res: Response, _next: (value?: unknown) => void) => {
-      const message = err instanceof Error ? err.message : "Unexpected server error.";
-      this.logger.error(message);
-      res.status(500).render("partials/error", {
-        message: "Unexpected server error.",
-        layout: false,
-      });
-    });
+        res.status(500).render("partials/error", {
+          message: "Unexpected server error.",
+          layout: false,
+        });
+      },
+    );
   }
 
   getExpressApp(): express.Express {
@@ -570,7 +624,6 @@ class ExpressApp implements IApp {
 
 export function CreateApp(
   authController: IAuthController,
-
   archiveController: IArchiveController,
   commentController: ICommentController,
   commentService: ICommentService,
@@ -582,7 +635,21 @@ export function CreateApp(
   eventService: IEventService,
   eventRepository: IEventRepository,
   userRepository: IUserRepository,
-
+  eventListController: IEventListController,
 ): IApp {
-  return new ExpressApp(authController, archiveController, commentController, commentService, eventCreationController, rsvpController, saveController, attendeeController, logger, eventService, eventRepository, userRepository);
+  return new ExpressApp(
+    authController,
+    archiveController,
+    commentController,
+    commentService,
+    eventCreationController,
+    rsvpController,
+    saveController,
+    logger,
+    attendeeController,
+    eventService,
+    eventRepository,
+    userRepository,
+    eventListController,
+  );
 }

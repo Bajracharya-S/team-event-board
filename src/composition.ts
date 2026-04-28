@@ -5,60 +5,69 @@ import { CreateInMemoryUserRepository } from "./auth/InMemoryUserRepository";
 import { CreatePasswordHasher } from "./auth/PasswordHasher";
 import { CreateApp } from "./app";
 import type { IApp } from "./contracts";
+
 import { CreateInMemoryEventRepository } from "./event/InMemoryEventRepository";
 import type { IEventRepository } from "./event/EventRepository";
+import { CreateEventService } from "./event/EventService";
+
+import { CreateEventListService } from "./event-list/EventListService";
+import { CreateEventListController } from "./event-list/EventListController";
+
 import { CreateArchiveService } from "./archive/ArchiveService";
 import { CreateArchiveController } from "./archive/ArchiveController";
+
 import { CreateInMemoryCommentRepository } from "./comment/InMemoryCommentRepository";
 import { CreateCommentService } from "./comment/CommentService";
 import { CreateCommentController } from "./comment/CommentController";
+
 import { CreateInMemoryRSVPRepository } from "./rsvp/InMemoryRSVPRepository";
 import { CreateRSVPService } from "./rsvp/RSVPService";
 import { CreateRSVPController } from "./rsvp/RSVPController";
+
 import { CreateEventCreationService } from "./event-creation/EventCreationService";
 import { CreateEventCreationController } from "./event-creation/EventCreationController";
-import { CreateLoggingService } from "./service/LoggingService";
-import {InMemoryAttendeeRepository} from "./attendee-list/AttendeeRepository"
-import {CreateAttendeeService} from "./attendee-list/AttendeeService"
-import {CreateAttendeeController} from "./attendee-list/AttendeeController"
-import type { ILoggingService } from "./service/LoggingService";
-import { CreateEventService } from "./event/EventService";
-import type { IEventService } from "./event/EventService";
 
+import { InMemoryAttendeeRepository } from "./attendee-list/AttendeeRepository";
+import { CreateAttendeeService } from "./attendee-list/AttendeeService";
+import { CreateAttendeeController } from "./attendee-list/AttendeeController";
 
-export let eventRepo: IEventRepository;
 import { InMemorySavedEventRepository } from "./saveForLater/SaveRepo";
 import { CreateSaveService } from "./saveForLater/SaveService";
 import { CreateSaveController } from "./saveForLater/saveController";
 
+import { CreateLoggingService } from "./service/LoggingService";
+import type { ILoggingService } from "./service/LoggingService";
+
+export let eventRepo: IEventRepository;
+
 export function createComposedApp(logger?: ILoggingService): IApp {
   const resolvedLogger = logger ?? CreateLoggingService();
 
-  // Event repository (shared across features)
   eventRepo = CreateInMemoryEventRepository();
+
   const eventService = CreateEventService(eventRepo);
+  const eventListService = CreateEventListService(eventRepo);
+  const eventListController = CreateEventListController(eventListService);
 
-
-  // Archive
   const archiveService = CreateArchiveService(eventRepo);
   const archiveController = CreateArchiveController(archiveService, resolvedLogger);
 
-  // Comments
   const commentRepo = CreateInMemoryCommentRepository();
   const commentService = CreateCommentService(commentRepo, eventRepo);
   const commentController = CreateCommentController(commentService, resolvedLogger);
 
-  // Authentication & authorization wiring
   const authUsers = CreateInMemoryUserRepository();
   const passwordHasher = CreatePasswordHasher();
   const authService = CreateAuthService(authUsers, passwordHasher);
   const adminUserService = CreateAdminUserService(authUsers, passwordHasher);
   const authController = CreateAuthController(authService, adminUserService, resolvedLogger);
 
-  // Ft(1) Event Creation
   const eventCreationService = CreateEventCreationService(eventRepo);
-  const eventCreationController = CreateEventCreationController(eventCreationService, resolvedLogger);
-// Ft(4) RSVP
+  const eventCreationController = CreateEventCreationController(
+    eventCreationService,
+    resolvedLogger,
+  );
+
   const rsvpRepo = CreateInMemoryRSVPRepository();
   const rsvpService = CreateRSVPService(rsvpRepo, eventRepo);
   const rsvpController = CreateRSVPController(rsvpService, resolvedLogger);
@@ -67,11 +76,23 @@ export function createComposedApp(logger?: ILoggingService): IApp {
   const saveService = CreateSaveService(savedEventRepo);
   const saveController = CreateSaveController(saveService, resolvedLogger);
 
+  const attendeeRepo = new InMemoryAttendeeRepository(rsvpRepo);
+  const attendeeService = CreateAttendeeService(attendeeRepo, eventRepo);
+  const attendeeController = CreateAttendeeController(attendeeService, resolvedLogger);
 
-const attendeeRepo = new InMemoryAttendeeRepository(rsvpRepo)
-const attendeeService = CreateAttendeeService(attendeeRepo, eventRepo)  // add eventRepo
-const attendeeController = CreateAttendeeController(attendeeService, resolvedLogger)
-
-  return CreateApp(authController, archiveController, commentController, commentService, eventCreationController, rsvpController, saveController, resolvedLogger, attendeeController, eventService, eventRepo, authUsers);
+  return CreateApp(
+    authController,
+    archiveController,
+    commentController,
+    commentService,
+    eventCreationController,
+    rsvpController,
+    saveController,
+    resolvedLogger,
+    attendeeController,
+    eventService,
+    eventRepo,
+    authUsers,
+    eventListController,
+  );
 }
-
