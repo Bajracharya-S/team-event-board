@@ -20,3 +20,12 @@ model Event {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 }
+
+model SavedEvent {
+  id      Int      @id @default(autoincrement())
+  userId  String
+  eventId String
+  savedAt DateTime @default(now())
+
+  @@unique([userId, eventId])
+}
