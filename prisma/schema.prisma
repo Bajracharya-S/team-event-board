@@ -20,7 +20,8 @@ model Event {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  rsvps Rsvp[]
+  rsvps    Rsvp[]
+  comments Comment[]
 }
 
 model SavedEvent {
@@ -41,4 +42,15 @@ model Rsvp {
   event     Event    @relation(fields: [eventId], references: [id])
 
   @@unique([eventId, userId])
+}
+
+model Comment {
+  id                String   @id
+  eventId           String
+  authorId          String
+  authorDisplayName String
+  content           String
+  createdAt         DateTime @default(now())
+
+  event Event @relation(fields: [eventId], references: [id])
 }

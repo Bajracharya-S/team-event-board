@@ -11,6 +11,9 @@ const SEED_EVENTS = [
 ];
 
 beforeAll(async () => {
+  await prisma.comment.deleteMany();
+  await prisma.rsvp.deleteMany();
+  await prisma.savedEvent.deleteMany();
   await prisma.event.deleteMany();
   for (const e of SEED_EVENTS) {
     await prisma.event.upsert({ where: { id: e.id }, update: e, create: e });
@@ -18,6 +21,9 @@ beforeAll(async () => {
 });
 
 beforeEach(async () => {
+  await prisma.comment.deleteMany();
+  await prisma.rsvp.deleteMany();
+  await prisma.savedEvent.deleteMany();
   for (const e of SEED_EVENTS) {
     await prisma.event.upsert({
       where: { id: e.id },
