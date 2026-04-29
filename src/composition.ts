@@ -5,6 +5,7 @@ import { CreateInMemoryUserRepository } from "./auth/InMemoryUserRepository";
 import { CreatePasswordHasher } from "./auth/PasswordHasher";
 import { CreateApp } from "./app";
 import type { IApp } from "./contracts";
+import { CreatePrismaAttendeeRepository } from "./attendee-list/AttendeePrisma";
 
 import { CreatePrismaEventRepository } from "./event/PrismaEventRepository";
 import type { IEventRepository } from "./event/EventRepository";
@@ -77,7 +78,8 @@ export function createComposedApp(logger?: ILoggingService): IApp {
   const saveService = CreateSaveService(savedEventRepo);
   const saveController = CreateSaveController(saveService, resolvedLogger);
 
-  const attendeeRepo = new InMemoryAttendeeRepository(rsvpRepo);
+  // const attendeeRepo = new InMemoryAttendeeRepository(rsvpRepo);
+  const attendeeRepo = CreatePrismaAttendeeRepository(prisma, authUsers);
   const attendeeService = CreateAttendeeService(attendeeRepo, eventRepo);
   const attendeeController = CreateAttendeeController(attendeeService, resolvedLogger);
 
