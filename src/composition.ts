@@ -6,8 +6,9 @@ import { CreatePasswordHasher } from "./auth/PasswordHasher";
 import { CreateApp } from "./app";
 import type { IApp } from "./contracts";
 
-import { CreateInMemoryEventRepository } from "./event/InMemoryEventRepository";
+import { CreatePrismaEventRepository } from "./event/PrismaEventRepository";
 import type { IEventRepository } from "./event/EventRepository";
+import { prisma } from "./lib/prisma";
 import { CreateEventService } from "./event/EventService";
 
 import { CreateEventListService } from "./event-list/EventListService";
@@ -20,7 +21,7 @@ import { CreateInMemoryCommentRepository } from "./comment/InMemoryCommentReposi
 import { CreateCommentService } from "./comment/CommentService";
 import { CreateCommentController } from "./comment/CommentController";
 
-import { CreateInMemoryRSVPRepository } from "./rsvp/InMemoryRSVPRepository";
+import { CreatePrismaRSVPRepository } from "./rsvp/PrismaRSVPRepository";
 import { CreateRSVPService } from "./rsvp/RSVPService";
 import { CreateRSVPController } from "./rsvp/RSVPController";
 
@@ -43,7 +44,7 @@ export let eventRepo: IEventRepository;
 export function createComposedApp(logger?: ILoggingService): IApp {
   const resolvedLogger = logger ?? CreateLoggingService();
 
-  eventRepo = CreateInMemoryEventRepository();
+  eventRepo = CreatePrismaEventRepository(prisma);
 
   const eventService = CreateEventService(eventRepo);
   const eventListService = CreateEventListService(eventRepo);
@@ -68,7 +69,7 @@ export function createComposedApp(logger?: ILoggingService): IApp {
     resolvedLogger,
   );
 
-  const rsvpRepo = CreateInMemoryRSVPRepository();
+  const rsvpRepo = CreatePrismaRSVPRepository(prisma);
   const rsvpService = CreateRSVPService(rsvpRepo, eventRepo);
   const rsvpController = CreateRSVPController(rsvpService, resolvedLogger);
 
