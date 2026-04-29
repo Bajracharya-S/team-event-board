@@ -18,7 +18,7 @@ import { CreateEventListController } from "./event-list/EventListController";
 import { CreateArchiveService } from "./archive/ArchiveService";
 import { CreateArchiveController } from "./archive/ArchiveController";
 
-import { CreateInMemoryCommentRepository } from "./comment/InMemoryCommentRepository";
+import { CreatePrismaCommentRepository } from "./comment/PrismaCommentRepository";
 import { CreateCommentService } from "./comment/CommentService";
 import { CreateCommentController } from "./comment/CommentController";
 
@@ -55,7 +55,7 @@ export function createComposedApp(logger?: ILoggingService): IApp {
   const archiveService = CreateArchiveService(eventRepo);
   const archiveController = CreateArchiveController(archiveService, resolvedLogger);
 
-  const commentRepo = CreateInMemoryCommentRepository();
+  const commentRepo = CreatePrismaCommentRepository(prisma);
   const commentService = CreateCommentService(commentRepo, eventRepo);
   const commentController = CreateCommentController(commentService, resolvedLogger);
 
