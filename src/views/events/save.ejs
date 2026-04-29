@@ -26,17 +26,6 @@
               Saved at <%= event.savedAt.toLocaleString("en-US", { year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }) %>
             </p>
           </div>
-          <div class="text-right shrink-0">
-            <form 
-              hx-post="/events/<%= event.eventId %>/saveToggle"
-              hx-target="closest li"
-              hx-swap="outerHTML"
-            >
-              <button type="submit" class="text-xs px-2.5 py-1 rounded-full bg-red-50 text-red-500 font-semibold hover:bg-red-100">
-                Unsave
-              </button>
-            </form>
-          </div>
         </div>
       </li>
     <% }) %>
