@@ -21,7 +21,7 @@ import { CreateInMemoryCommentRepository } from "./comment/InMemoryCommentReposi
 import { CreateCommentService } from "./comment/CommentService";
 import { CreateCommentController } from "./comment/CommentController";
 
-import { CreateInMemoryRSVPRepository } from "./rsvp/InMemoryRSVPRepository";
+import { CreatePrismaRSVPRepository } from "./rsvp/PrismaRSVPRepository";
 import { CreateRSVPService } from "./rsvp/RSVPService";
 import { CreateRSVPController } from "./rsvp/RSVPController";
 
@@ -70,7 +70,7 @@ export function createComposedApp(logger?: ILoggingService): IApp {
     resolvedLogger,
   );
 
-  const rsvpRepo = CreateInMemoryRSVPRepository();
+  const rsvpRepo = CreatePrismaRSVPRepository(prisma);
   const rsvpService = CreateRSVPService(rsvpRepo, eventRepo);
   const rsvpController = CreateRSVPController(rsvpService, resolvedLogger);
 
