@@ -32,6 +32,7 @@ import { InMemoryAttendeeRepository } from "./attendee-list/AttendeeRepository";
 import { CreateAttendeeService } from "./attendee-list/AttendeeService";
 import { CreateAttendeeController } from "./attendee-list/AttendeeController";
 
+import { PrismaSavedEventRepository } from "./saveForLater/SavePrisma";
 import { InMemorySavedEventRepository } from "./saveForLater/SaveRepo";
 import { CreateSaveService } from "./saveForLater/SaveService";
 import { CreateSaveController } from "./saveForLater/saveController";
@@ -73,7 +74,8 @@ export function createComposedApp(logger?: ILoggingService): IApp {
   const rsvpService = CreateRSVPService(rsvpRepo, eventRepo);
   const rsvpController = CreateRSVPController(rsvpService, resolvedLogger);
 
-  const savedEventRepo = new InMemorySavedEventRepository();
+  // const savedEventRepo = new InMemorySavedEventRepository();
+  const savedEventRepo = new PrismaSavedEventRepository(prisma);
   const saveService = CreateSaveService(savedEventRepo);
   const saveController = CreateSaveController(saveService, resolvedLogger);
 
