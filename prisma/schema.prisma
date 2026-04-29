@@ -19,6 +19,8 @@ model Event {
   organizerId   String
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+
+  rsvps Rsvp[]
 }
 
 model SavedEvent {
@@ -28,7 +30,6 @@ model SavedEvent {
   savedAt DateTime @default(now())
 
   @@unique([userId, eventId])
-  rsvps         Rsvp[]
 }
 
 model Rsvp {
