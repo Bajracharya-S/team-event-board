@@ -1,9 +1,9 @@
 import { Ok, Err, type Result } from "../lib/result";
 import type { IEvent, EventStatus } from "./Event";
-import type { IEventRepository, EventRepositoryError } from "./EventRepository";
+import type { EventListQuery, IEventRepository, EventRepositoryError } from "./EventRepository";
 import { randomUUID } from "node:crypto";
 import type { PrismaClient } from "@prisma/client";
-// feature 1 sprint 3 implementation
+
 const UnexpectedError = (message: string): EventRepositoryError => ({
   name: "UnexpectedError",
   message,
@@ -50,7 +50,7 @@ class PrismaEventRepository implements IEventRepository {
     try {
       const rows = await this.db.event.findMany();
       return Ok(rows.map(toIEvent));
-    } catch (e) {
+    } catch {
       return Err(UnexpectedError("Unable to retrieve events."));
     }
   }
@@ -59,7 +59,7 @@ class PrismaEventRepository implements IEventRepository {
     try {
       const row = await this.db.event.findUnique({ where: { id } });
       return Ok(row ? toIEvent(row) : null);
-    } catch (e) {
+    } catch {
       return Err(UnexpectedError("Unable to retrieve event."));
     }
   }
@@ -68,8 +68,43 @@ class PrismaEventRepository implements IEventRepository {
     try {
       const rows = await this.db.event.findMany({ where: { status } });
       return Ok(rows.map(toIEvent));
-    } catch (e) {
+    } catch {
       return Err(UnexpectedError("Unable to retrieve events by status."));
+    }
+  }
+
+  async findPublishedUpcoming(
+    query: EventListQuery,
+  ): Promise<Result<IEvent[], EventRepositoryError>> {
+    try {
+      const searchTerm = query.query?.trim();
+
+      const rows = await this.db.event.findMany({
+        where: {
+          status: "published",
+          startDatetime: {
+            gte: query.startsAtOrAfter,
+            ...(query.startsBefore ? { lt: query.startsBefore } : {}),
+          },
+          ...(query.category ? { category: query.category } : {}),
+          ...(searchTerm
+            ? {
+                OR: [
+                  { title: { contains: searchTerm } },
+                  { description: { contains: searchTerm } },
+                  { location: { contains: searchTerm } },
+                ],
+              }
+            : {}),
+        },
+        orderBy: {
+          startDatetime: "asc",
+        },
+      });
+
+      return Ok(rows.map(toIEvent));
+    } catch {
+      return Err(UnexpectedError("Unable to retrieve published upcoming events."));
     }
   }
 
@@ -90,7 +125,7 @@ class PrismaEventRepository implements IEventRepository {
         },
       });
       return Ok(toIEvent(row));
-    } catch (e) {
+    } catch {
       return Err(UnexpectedError("Unable to create event."));
     }
   }
@@ -102,12 +137,14 @@ class PrismaEventRepository implements IEventRepository {
     try {
       const existing = await this.db.event.findUnique({ where: { id } });
       if (!existing) return Ok(null);
+
       const row = await this.db.event.update({
         where: { id },
         data: { status },
       });
+
       return Ok(toIEvent(row));
-    } catch (e) {
+    } catch {
       return Err(UnexpectedError("Unable to update event status."));
     }
   }
