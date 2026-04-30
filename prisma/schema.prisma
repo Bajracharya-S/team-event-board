@@ -19,4 +19,38 @@ model Event {
   organizerId   String
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+
+  rsvps    Rsvp[]
+  comments Comment[]
+}
+
+model SavedEvent {
+  id      Int      @id @default(autoincrement())
+  userId  String
+  eventId String
+  savedAt DateTime @default(now())
+
+  @@unique([userId, eventId])
+}
+
+model Rsvp {
+  id        String   @id
+  eventId   String
+  userId    String
+  status    String
+  createdAt DateTime @default(now())
+  event     Event    @relation(fields: [eventId], references: [id])
+
+  @@unique([eventId, userId])
+}
+
+model Comment {
+  id                String   @id
+  eventId           String
+  authorId          String
+  authorDisplayName String
+  content           String
+  createdAt         DateTime @default(now())
+
+  event Event @relation(fields: [eventId], references: [id])
 }

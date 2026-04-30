@@ -33,16 +33,28 @@ const UnexpectedError = (message: string): EventListError => ({
   message,
 });
 
+function getWeekendRange(now: Date): { startsAtOrAfter: Date; startsBefore: Date } {
+  const startOfToday = new Date(now);
+  startOfToday.setHours(0, 0, 0, 0);
+
+  const daysUntilSaturday = (6 - startOfToday.getDay() + 7) % 7;
+
+  const saturday = new Date(startOfToday);
+  saturday.setDate(startOfToday.getDate() + daysUntilSaturday);
+
+  const monday = new Date(saturday);
+  monday.setDate(saturday.getDate() + 2);
+
+  return {
+    startsAtOrAfter: saturday,
+    startsBefore: monday,
+  };
+}
+
 class EventListService implements IEventListService {
   constructor(private readonly eventRepo: IEventRepository) {}
 
   async listEvents(filters: EventFilters): Promise<Result<IEvent[], EventListError>> {
-    const allEventsResult = await this.eventRepo.findAll();
-
-    if (!allEventsResult.ok) {
-      return Err(UnexpectedError("Unable to retrieve events."));
-    }
-
     const now = new Date();
 
     const query = filters.query?.trim() ?? "";
@@ -61,54 +73,32 @@ class EventListService implements IEventListService {
       return Err(InvalidFilterError(`"${filters.timeframe}" is not a valid timeframe.`));
     }
 
-    let events = allEventsResult.value.filter(
-      (event) => event.status === "published" && event.startDatetime >= now,
-    );
-
-    if (category !== "") {
-      events = events.filter((event) => event.category.toLowerCase() === category);
-    }
+    let startsAtOrAfter = now;
+    let startsBefore: Date | undefined;
 
     if (timeframe === "week") {
-      const endOfWeek = new Date(now);
-      endOfWeek.setDate(now.getDate() + 7);
-
-      events = events.filter(
-        (event) => event.startDatetime >= now && event.startDatetime <= endOfWeek,
-      );
+      startsBefore = new Date(now);
+      startsBefore.setDate(now.getDate() + 7);
     }
 
     if (timeframe === "weekend") {
-      const startOfToday = new Date(now);
-      startOfToday.setHours(0, 0, 0, 0);
-
-      const daysUntilSaturday = (6 - startOfToday.getDay() + 7) % 7;
-
-      const saturday = new Date(startOfToday);
-      saturday.setDate(startOfToday.getDate() + daysUntilSaturday);
-
-      const monday = new Date(saturday);
-      monday.setDate(saturday.getDate() + 2);
-
-      events = events.filter(
-        (event) => event.startDatetime >= saturday && event.startDatetime < monday,
-      );
+      const weekendRange = getWeekendRange(now);
+      startsAtOrAfter = weekendRange.startsAtOrAfter;
+      startsBefore = weekendRange.startsBefore;
     }
 
-    if (query !== "") {
-      const loweredQuery = query.toLowerCase();
+    const eventsResult = await this.eventRepo.findPublishedUpcoming({
+      query,
+      category: category || undefined,
+      startsAtOrAfter,
+      startsBefore,
+    });
 
-      events = events.filter(
-        (event) =>
-          event.title.toLowerCase().includes(loweredQuery) ||
-          event.description.toLowerCase().includes(loweredQuery) ||
-          event.location.toLowerCase().includes(loweredQuery),
-      );
+    if (!eventsResult.ok) {
+      return Err(UnexpectedError("Unable to retrieve events."));
     }
 
-    events.sort((a, b) => a.startDatetime.getTime() - b.startDatetime.getTime());
-
-    return Ok(events);
+    return Ok(eventsResult.value);
   }
 }
 

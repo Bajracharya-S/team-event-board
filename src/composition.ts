@@ -5,9 +5,11 @@ import { CreateInMemoryUserRepository } from "./auth/InMemoryUserRepository";
 import { CreatePasswordHasher } from "./auth/PasswordHasher";
 import { CreateApp } from "./app";
 import type { IApp } from "./contracts";
+import { CreatePrismaAttendeeRepository } from "./attendee-list/AttendeePrisma";
 
-import { CreateInMemoryEventRepository } from "./event/InMemoryEventRepository";
+import { CreatePrismaEventRepository } from "./event/PrismaEventRepository";
 import type { IEventRepository } from "./event/EventRepository";
+import { prisma } from "./lib/prisma";
 import { CreateEventService } from "./event/EventService";
 
 import { CreateEventListService } from "./event-list/EventListService";
@@ -16,11 +18,11 @@ import { CreateEventListController } from "./event-list/EventListController";
 import { CreateArchiveService } from "./archive/ArchiveService";
 import { CreateArchiveController } from "./archive/ArchiveController";
 
-import { CreateInMemoryCommentRepository } from "./comment/InMemoryCommentRepository";
+import { CreatePrismaCommentRepository } from "./comment/PrismaCommentRepository";
 import { CreateCommentService } from "./comment/CommentService";
 import { CreateCommentController } from "./comment/CommentController";
 
-import { CreateInMemoryRSVPRepository } from "./rsvp/InMemoryRSVPRepository";
+import { CreatePrismaRSVPRepository } from "./rsvp/PrismaRSVPRepository";
 import { CreateRSVPService } from "./rsvp/RSVPService";
 import { CreateRSVPController } from "./rsvp/RSVPController";
 
@@ -31,6 +33,7 @@ import { InMemoryAttendeeRepository } from "./attendee-list/AttendeeRepository";
 import { CreateAttendeeService } from "./attendee-list/AttendeeService";
 import { CreateAttendeeController } from "./attendee-list/AttendeeController";
 
+import { PrismaSavedEventRepository } from "./saveForLater/SavePrisma";
 import { InMemorySavedEventRepository } from "./saveForLater/SaveRepo";
 import { CreateSaveService } from "./saveForLater/SaveService";
 import { CreateSaveController } from "./saveForLater/saveController";
@@ -43,7 +46,7 @@ export let eventRepo: IEventRepository;
 export function createComposedApp(logger?: ILoggingService): IApp {
   const resolvedLogger = logger ?? CreateLoggingService();
 
-  eventRepo = CreateInMemoryEventRepository();
+  eventRepo = CreatePrismaEventRepository(prisma);
 
   const eventService = CreateEventService(eventRepo);
   const eventListService = CreateEventListService(eventRepo);
@@ -52,7 +55,7 @@ export function createComposedApp(logger?: ILoggingService): IApp {
   const archiveService = CreateArchiveService(eventRepo);
   const archiveController = CreateArchiveController(archiveService, resolvedLogger);
 
-  const commentRepo = CreateInMemoryCommentRepository();
+  const commentRepo = CreatePrismaCommentRepository(prisma);
   const commentService = CreateCommentService(commentRepo, eventRepo);
   const commentController = CreateCommentController(commentService, resolvedLogger);
 
@@ -68,15 +71,17 @@ export function createComposedApp(logger?: ILoggingService): IApp {
     resolvedLogger,
   );
 
-  const rsvpRepo = CreateInMemoryRSVPRepository();
+  const rsvpRepo = CreatePrismaRSVPRepository(prisma);
   const rsvpService = CreateRSVPService(rsvpRepo, eventRepo);
   const rsvpController = CreateRSVPController(rsvpService, resolvedLogger);
 
-  const savedEventRepo = new InMemorySavedEventRepository();
+  // const savedEventRepo = new InMemorySavedEventRepository();
+  const savedEventRepo = new PrismaSavedEventRepository(prisma);
   const saveService = CreateSaveService(savedEventRepo);
   const saveController = CreateSaveController(saveService, resolvedLogger);
 
-  const attendeeRepo = new InMemoryAttendeeRepository(rsvpRepo);
+  // const attendeeRepo = new InMemoryAttendeeRepository(rsvpRepo);
+  const attendeeRepo = CreatePrismaAttendeeRepository(prisma, authUsers);
   const attendeeService = CreateAttendeeService(attendeeRepo, eventRepo);
   const attendeeController = CreateAttendeeController(attendeeService, resolvedLogger);
 
