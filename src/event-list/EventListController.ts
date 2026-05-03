@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { IEventListService } from "./EventListService";
 import type { IAppBrowserSession, IAuthenticatedUserSession } from "../session/AppSession";
+import type { ISaveService } from "../saveForLater/SaveService";
 
 export interface IEventListController {
   listEvents(
@@ -12,7 +13,10 @@ export interface IEventListController {
 }
 
 class EventListController implements IEventListController {
-  constructor(private readonly eventListService: IEventListService) {}
+  constructor(
+    private readonly eventListService: IEventListService,
+    private readonly saveService: ISaveService,
+  ) {}
 
   private isHtmxRequest(req: Request): boolean {
     return req.get("HX-Request") === "true";
@@ -35,7 +39,6 @@ class EventListController implements IEventListController {
     if (result.ok === false) {
       const error = result.value;
       const status = error.name === "UnexpectedError" ? 500 : 400;
-
       res.status(status).render("partials/error", {
         message: error.message,
         layout: false,
@@ -43,11 +46,17 @@ class EventListController implements IEventListController {
       return;
     }
 
+    const savedEventIds =
+      currentUser.role === "user"
+        ? await this.saveService.getSavedEvents(currentUser.userId).then(s => s.map(e => e.savedEvent.eventId))
+        : [];
+
     if (this.isHtmxRequest(req)) {
       res.render("events/list", {
         events: result.value,
         filters,
         currentUser,
+        savedEventIds,
         layout: false,
       });
       return;
@@ -58,12 +67,14 @@ class EventListController implements IEventListController {
       currentUser,
       events: result.value,
       filters,
+      savedEventIds,
     });
   }
 }
 
 export function CreateEventListController(
   eventListService: IEventListService,
+  saveService: ISaveService,
 ): IEventListController {
-  return new EventListController(eventListService);
+  return new EventListController(eventListService, saveService);
 }
