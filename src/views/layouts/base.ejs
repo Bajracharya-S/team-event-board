@@ -36,40 +36,36 @@
 
 <div class="max-w-5xl mx-auto z-10" >
 
-<nav class="flex items-center justify-between gap-3 mb-6 flex-wrap px-4 py-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-sm">
+<nav class="flex items-center justify-between gap-3 mb-6 flex-wrap px-4 py-3 rounded-2xl border border-white/20 dark:border-white/10 shadow-sm backdrop-blur-md bg-white/80 dark:bg-slate-900/80">
 
   <!-- Logo -->
   <a
-      href="<%= session?.authenticatedUser ? '/home' : '/login' %>"
-  class="inline-flex items-center gap-2.5 font-bold text-slate-900 dark:text-white no-underline group"
->
-  <span class="relative flex items-center justify-center w-8 h-8">
-    <!-- Rotating outer ring -->
-    <span class="absolute inset-0 rounded-full border-2 border-transparent border-t-blue-500 border-r-blue-400 animate-spin" style="animation-duration:2s;"></span>
-    <!-- Counter-rotating inner ring -->
-    <span class="absolute inset-1 rounded-full border-2 border-transparent border-b-indigo-500 border-l-indigo-400 animate-spin" style="animation-duration:1.5s;animation-direction:reverse;"></span>
-    <!-- Pulsing glow -->
-    <span class="absolute inset-0 rounded-full bg-blue-500 opacity-10 animate-pulse"></span>
-    <!-- Core icon -->
-    <span class="relative w-4 h-4 flex items-center justify-center">
-      <svg viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4 text-blue-600 dark:text-blue-400 group-hover:scale-110 transition-transform duration-300">
-        <path d="M19 4h-1V2h-2v2H8V2H6v2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2z"/>
-      </svg>
+    href="<%= session?.authenticatedUser ? '/home' : '/login' %>"
+    class="inline-flex items-center gap-2.5 font-bold text-slate-900 dark:text-white no-underline group shrink-0"
+  >
+    <span class="relative flex items-center justify-center w-8 h-8">
+      <span class="absolute inset-0 rounded-full border-2 border-transparent border-t-blue-500 border-r-blue-400 animate-spin" style="animation-duration:2s;"></span>
+      <span class="absolute inset-1 rounded-full border-2 border-transparent border-b-indigo-500 border-l-indigo-400 animate-spin" style="animation-duration:1.5s;animation-direction:reverse;"></span>
+      <span class="absolute inset-0 rounded-full bg-blue-500 opacity-10 animate-pulse"></span>
+      <span class="relative w-4 h-4 flex items-center justify-center">
+        <svg viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4 text-blue-600 dark:text-blue-400 group-hover:scale-110 transition-transform duration-300">
+          <path d="M19 4h-1V2h-2v2H8V2H6v2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2z"/>
+        </svg>
+      </span>
     </span>
-  </span>
-  <span class="bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400 bg-clip-text text-transparent">
-    Event Board
-  </span>
-</a>
+    <span class="bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400 bg-clip-text text-transparent">
+      Event Board
+    </span>
+  </a>
 
   <% if (session?.authenticatedUser) { %>
 
-  <!-- Nav Links -->
-  <div class="flex items-center gap-1">
+  <!-- Nav links — scrollable on small screens -->
+  <div class="flex items-center gap-0.5 overflow-x-auto scrollbar-none flex-1 justify-center min-w-0 px-2">
 
     <% if (session.authenticatedUser.role === "admin") { %>
-    <a href="/admin/users" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white no-underline transition-colors">
-      <svg viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4">
+    <a href="/admin/users" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white no-underline transition-colors whitespace-nowrap shrink-0">
+      <svg viewBox="0 0 24 24" fill="currentColor" class="w-3.5 h-3.5 shrink-0">
         <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/>
       </svg>
       Manage Users
@@ -77,31 +73,31 @@
     <% } %>
 
     <% if (session.authenticatedUser.role === "admin" || session.authenticatedUser.role === "staff") { %>
-    <a href="/events/new" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white no-underline transition-colors">
-      <svg viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4">
+    <a href="/events/new" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white no-underline transition-colors whitespace-nowrap shrink-0">
+      <svg viewBox="0 0 24 24" fill="currentColor" class="w-3.5 h-3.5 shrink-0">
         <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/>
       </svg>
       Create Event
     </a>
     <% } %>
 
-    <a href="/events" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white no-underline transition-colors">
-      <svg viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4">
+    <a href="/events" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white no-underline transition-colors whitespace-nowrap shrink-0">
+      <svg viewBox="0 0 24 24" fill="currentColor" class="w-3.5 h-3.5 shrink-0">
         <path d="M17 12h-5v5h5v-5zM16 1v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5c0-1.1-.89-2-2-2h-1V1h-2zm3 18H5V8h14v11z"/>
       </svg>
       Events
     </a>
 
-    <a href="/archive" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white no-underline transition-colors">
-      <svg viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4">
+    <a href="/archive" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white no-underline transition-colors whitespace-nowrap shrink-0">
+      <svg viewBox="0 0 24 24" fill="currentColor" class="w-3.5 h-3.5 shrink-0">
         <path d="M20.54 5.23l-1.39-1.68C18.88 3.21 18.47 3 18 3H6c-.47 0-.88.21-1.16.55L3.46 5.23C3.17 5.57 3 6.02 3 6.5V19a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6.5c0-.48-.17-.93-.46-1.27zM12 17.5L6.5 12H10v-2h4v2h3.5L12 17.5zM5.12 5l.81-1h12l.94 1H5.12z"/>
       </svg>
       Archive
     </a>
 
     <% if (session.authenticatedUser.role === "user") { %>
-    <a href="/profile/saved" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white no-underline transition-colors">
-      <svg viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4">
+    <a href="/profile/saved" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white no-underline transition-colors whitespace-nowrap shrink-0">
+      <svg viewBox="0 0 24 24" fill="currentColor" class="w-3.5 h-3.5 shrink-0">
         <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
       </svg>
       Saved
@@ -110,10 +106,10 @@
 
   </div>
 
-  <!-- Right side: user info + dark toggle + logout -->
-  <div class="flex items-center gap-2">
+  <!-- Right side -->
+  <div class="flex items-center gap-2 shrink-0">
 
-    <div class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+    <div class="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
       <div class="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
         <span class="text-xs font-bold text-blue-600 dark:text-blue-400"><%= session.authenticatedUser.displayName.charAt(0).toUpperCase() %></span>
       </div>
@@ -126,7 +122,7 @@
       x-data="{ dark: document.documentElement.classList.contains('dark') }"
       x-on:darkmode-changed.window="dark = document.documentElement.classList.contains('dark')"
       :class="dark ? 'bg-slate-700' : 'bg-amber-400'"
-      class="relative inline-flex h-7 w-14 items-center rounded-full transition-colors duration-300 cursor-pointer border-0 p-0"
+      class="relative inline-flex h-7 w-14 items-center rounded-full transition-colors duration-300 cursor-pointer border-0 p-0 shrink-0"
       role="switch"
       title="Toggle dark mode"
     >
@@ -144,7 +140,7 @@
     </button>
 
     <form method="post" action="/logout" class="m-0">
-      <button type="submit" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-red-50 dark:hover:bg-red-950 hover:text-red-600 dark:hover:text-red-400 hover:border-red-200 dark:hover:border-red-800 text-sm font-medium transition-colors">
+      <button type="submit" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-red-50 dark:hover:bg-red-950 hover:text-red-600 dark:hover:text-red-400 hover:border-red-200 dark:hover:border-red-800 text-sm font-medium transition-colors shrink-0">
         <svg viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4">
           <path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5-5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/>
         </svg>
@@ -155,7 +151,7 @@
   </div>
 
   <% } else { %>
-  <a href="/login" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800 hover:bg-blue-50 dark:hover:bg-blue-950 no-underline transition-colors">
+  <a href="/login" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800 hover:bg-blue-50 dark:hover:bg-blue-950 no-underline transition-colors shrink-0">
     <svg viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4">
       <path d="M11 7L9.6 8.4l2.6 2.6H2v2h10.2l-2.6 2.6L11 17l5-5-5-5zm9 12h-8v2h8c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-8v2h8v14z"/>
     </svg>
