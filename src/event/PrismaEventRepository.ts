@@ -42,9 +42,16 @@ function toIEvent(row: {
 class PrismaEventRepository implements IEventRepository {
   constructor(private readonly db: PrismaClient) {}
 
-  generateEventId(): string {
-    return randomUUID();
-  }
+  async generateEventId(): Promise<string> {
+  const events = await this.db.event.findMany({
+    where: { id: { startsWith: "event-" } },
+    orderBy: { createdAt: "desc" },
+    take: 1,
+  });
+  if (events.length === 0) return "event-1";
+  const last = parseInt(events[0].id.replace("event-", ""), 10);
+  return `event-${last + 1}`;
+}
 
   async findAll(): Promise<Result<IEvent[], EventRepositoryError>> {
     try {

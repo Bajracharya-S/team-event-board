@@ -79,7 +79,7 @@ class EventCreationService implements IEventCreationService {
 
     const now = new Date();
     const event: IEvent = {
-      id: this.eventRepo.generateEventId(),
+      id: await this.eventRepo.generateEventId(),
       title: input.title.trim(),
       description: input.description.trim(),
       location: input.location.trim(),
