@@ -50,7 +50,6 @@ export function createComposedApp(logger?: ILoggingService): IApp {
 
   const eventService = CreateEventService(eventRepo);
   const eventListService = CreateEventListService(eventRepo);
-  const eventListController = CreateEventListController(eventListService);
 
   const archiveService = CreateArchiveService(eventRepo);
   const archiveController = CreateArchiveController(archiveService, resolvedLogger);
@@ -77,8 +76,10 @@ export function createComposedApp(logger?: ILoggingService): IApp {
 
   // const savedEventRepo = new InMemorySavedEventRepository();
   const savedEventRepo = new PrismaSavedEventRepository(prisma);
-  const saveService = CreateSaveService(savedEventRepo);
+  const saveService = CreateSaveService(savedEventRepo, eventRepo);
   const saveController = CreateSaveController(saveService, resolvedLogger);
+  const eventListController = CreateEventListController(eventListService, saveService);
+
 
   // const attendeeRepo = new InMemoryAttendeeRepository(rsvpRepo);
   const attendeeRepo = CreatePrismaAttendeeRepository(prisma, authUsers);
