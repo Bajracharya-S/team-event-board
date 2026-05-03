@@ -53,15 +53,15 @@ class SaveController implements ISaveController {
 
   const isSaved = result.value === 'saved'
 
-  if (!isSaved) {
-    // returning empty string removes the li from the saved list
-    res.status(200).send('')
-    return
-  }
   res.render('saveButton', { eventId, isSaved, layout: false })
 }
 
-  async showSavedList(res: Response, session: IAppBrowserSession): Promise<void> {
+  async getSavedEventIds(userId: string): Promise<string[]> {
+  const saved = await this.service.getSavedEvents(userId)
+  return saved.map(s => s.savedEvent.eventId)
+}
+
+async showSavedList(res: Response, session: IAppBrowserSession): Promise<void> {
   const user = session.authenticatedUser
   if (!user) {
     res.redirect('/login')
@@ -71,11 +71,6 @@ class SaveController implements ISaveController {
   this.logger.info(`Showing saved list for user ${user.userId}`)
   const savedEvents = await this.service.getSavedEvents(user.userId)
   res.render('events/save', { savedEvents, session })
-}
-
-async getSavedEventIds(userId: string): Promise<string[]> {
-  const saved = await this.service.getSavedEvents(userId)
-  return saved.map(e => e.eventId)
 }
 }
 
