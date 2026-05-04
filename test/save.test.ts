@@ -1,10 +1,17 @@
 import { InMemorySavedEventRepository } from "../src/saveForLater/SaveRepo";
 import { CreateSaveService } from "../src/saveForLater/SaveService";
+import { CreateInMemoryEventRepository } from "../src/event/InMemoryEventRepository";
+
+function createSaveService() {
+  return CreateSaveService(
+    new InMemorySavedEventRepository(),
+    CreateInMemoryEventRepository(),
+  );
+}
 
 describe("SaveService", () => {
   it("saves an event for a user", async () => {
-    const repo = new InMemorySavedEventRepository();
-    const service = CreateSaveService(repo);
+    const service = createSaveService();
 
     const result = await service.toggleSaveEvent("user-1", "event-1");
 
@@ -15,8 +22,7 @@ describe("SaveService", () => {
   });
 
   it("unsaves an event that was already saved", async () => {
-    const repo = new InMemorySavedEventRepository();
-    const service = CreateSaveService(repo);
+    const service = createSaveService();
 
     await service.toggleSaveEvent("user-1", "event-1");
     const result = await service.toggleSaveEvent("user-1", "event-1");
@@ -28,8 +34,7 @@ describe("SaveService", () => {
   });
 
   it("does not create duplicate records when saving the same event twice", async () => {
-    const repo = new InMemorySavedEventRepository();
-    const service = CreateSaveService(repo);
+    const service = createSaveService();
 
     await service.toggleSaveEvent("user-1", "event-1");
     await service.toggleSaveEvent("user-1", "event-1"); // unsaves
@@ -40,8 +45,7 @@ describe("SaveService", () => {
   });
 
   it("saved list only contains events for the requesting user", async () => {
-    const repo = new InMemorySavedEventRepository();
-    const service = CreateSaveService(repo);
+    const service = createSaveService();
 
     await service.toggleSaveEvent("user-1", "event-1");
     await service.toggleSaveEvent("user-1", "event-2");
@@ -49,12 +53,11 @@ describe("SaveService", () => {
 
     const saved = await service.getSavedEvents("user-1");
     expect(saved).toHaveLength(2);
-    expect(saved.every(e => e.userId === "user-1")).toBe(true);
+    expect(saved.every(e => e.savedEvent.userId === "user-1")).toBe(true);
   });
 
   it("saved list is empty after unsaving all events", async () => {
-    const repo = new InMemorySavedEventRepository();
-    const service = CreateSaveService(repo);
+    const service = createSaveService();
 
     await service.toggleSaveEvent("user-1", "event-1");
     await service.toggleSaveEvent("user-1", "event-1");
@@ -64,8 +67,7 @@ describe("SaveService", () => {
   });
 
   it("two different users can save the same event independently", async () => {
-    const repo = new InMemorySavedEventRepository();
-    const service = CreateSaveService(repo);
+    const service = createSaveService();
 
     await service.toggleSaveEvent("user-1", "event-1");
     await service.toggleSaveEvent("user-2", "event-1");
