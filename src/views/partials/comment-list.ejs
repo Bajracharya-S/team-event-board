@@ -1,15 +1,31 @@
-<div id="comment-list">
+<div id="comment-list" class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4 shadow-sm sm:p-5">
   <% if (comments.length === 0) { %>
-  <p class="text-slate-400 dark:text-slate-500 text-sm text-center py-6 m-0">No comments yet. Be the first to comment.</p>
+  <div class="rounded-xl border border-dashed border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/70 px-4 py-8 text-center">
+    <p class="m-0 text-sm text-slate-400 dark:text-slate-500">No comments yet. Be the first to comment.</p>
+  </div>
   <% } else { %>
-  <ul class="space-y-3 list-none p-0 m-0">
+  <ul class="m-0 list-none space-y-3 p-0">
     <% comments.forEach(function(comment) { %>
-    <li class="p-4 border border-slate-100 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800">
-      <div class="flex items-start justify-between gap-2">
-        <div class="flex-1">
-          <p class="text-sm font-semibold text-slate-800 dark:text-slate-200 m-0 mb-1"><%= comment.authorDisplayName %></p>
-          <p class="text-sm text-slate-700 dark:text-slate-300 m-0"><%= comment.content %></p>
-          <p class="text-xs text-slate-400 dark:text-slate-500 m-0 mt-1">
+    <li
+      x-data="{ visible: false }"
+      x-init="$nextTick(() => visible = true)"
+      x-show="visible"
+      x-transition:enter="transition ease-out duration-300"
+      x-transition:enter-start="opacity-0 translate-y-2 scale-[0.98]"
+      x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+      class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 p-4 transition-colors hover:bg-white dark:hover:bg-slate-800"
+    >
+      <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div class="min-w-0 flex-1">
+          <div class="mb-2 flex flex-wrap items-center gap-2">
+            <p class="m-0 text-sm font-semibold text-slate-800 dark:text-slate-100"><%= comment.authorDisplayName %></p>
+            <span class="h-1 w-1 rounded-full bg-slate-300 dark:bg-slate-600"></span>
+            <p class="m-0 text-xs text-slate-400 dark:text-slate-500">
+              <%= new Date(comment.createdAt).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }) %>
+            </p>
+          </div>
+          <p class="m-0 whitespace-pre-wrap break-words text-sm leading-6 text-slate-700 dark:text-slate-300"><%= comment.content %></p>
+          <p class="sr-only">
             <%= new Date(comment.createdAt).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }) %>
           </p>
         </div>
@@ -25,7 +41,7 @@
           <input type="hidden" name="eventId" value="<%= comment.eventId %>" />
           <button
             type="submit"
-            class="text-xs text-red-500 hover:text-red-400 dark:text-red-400 dark:hover:text-red-300 bg-transparent border-0 cursor-pointer p-0 font-medium transition-colors"
+            class="rounded-lg border border-red-200 dark:border-red-900 bg-white dark:bg-slate-900 px-3 py-1.5 text-xs font-semibold text-red-500 transition-colors hover:bg-red-50 hover:text-red-600 dark:text-red-400 dark:hover:bg-red-950 dark:hover:text-red-300"
           >
             Delete
           </button>

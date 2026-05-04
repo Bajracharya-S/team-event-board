@@ -1,29 +1,53 @@
-<div id="comment-form">
+<div
+  id="comment-form"
+  x-data="{
+    content: '',
+    max: 500,
+    resetAfterPost(event) {
+      if (event.detail.elt === this.$refs.commentForm && event.detail.successful) {
+        this.content = '';
+      }
+    }
+  }"
+  x-on:htmx:after-request.window="resetAfterPost($event)"
+>
   <form
+    x-ref="commentForm"
     method="POST"
     action="/events/<%= eventId %>/comments"
     hx-post="/events/<%= eventId %>/comments"
     hx-target="#comment-list"
     hx-swap="outerHTML"
-    class="m-0"
+    class="m-0 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4 shadow-sm sm:p-5"
   >
     <div class="mb-3">
-      <label for="comment-content" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+      <label for="comment-content" class="mb-1 block text-sm font-semibold text-slate-700 dark:text-slate-300">
         Leave a comment
       </label>
       <textarea
+        x-model="content"
         id="comment-content"
         name="content"
         rows="3"
         maxlength="500"
         placeholder="Ask a question or leave a note..."
-        class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 resize-none focus:outline-none focus:ring-2 focus:ring-blue-300 dark:focus:ring-blue-700"
+        class="w-full resize-none rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 px-4 py-3 text-sm leading-6 text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 shadow-inner focus:outline-none focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-700"
       ></textarea>
-      <p class="text-xs text-slate-400 dark:text-slate-500 mt-1 m-0">Max 500 characters.</p>
+      <div class="mt-2 flex items-center justify-between gap-3">
+        <p class="m-0 text-xs text-slate-400 dark:text-slate-500">Keep it helpful and on topic.</p>
+        <p
+          class="m-0 shrink-0 text-xs font-medium"
+          x-bind:class="content.length > 450 ? 'text-amber-600 dark:text-amber-400' : 'text-slate-400 dark:text-slate-500'"
+        >
+          <span x-text="content.length">0</span> / <span x-text="max">500</span>
+        </p>
+      </div>
     </div>
     <button
       type="submit"
-      class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600 text-white text-sm font-medium cursor-pointer transition-colors"
+      x-bind:disabled="content.trim().length === 0"
+      x-bind:class="content.trim().length === 0 ? 'cursor-not-allowed bg-slate-300 text-slate-500 dark:bg-slate-700 dark:text-slate-400' : 'cursor-pointer bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600'"
+      class="inline-flex w-full items-center justify-center rounded-xl px-4 py-2 text-sm font-semibold transition-colors sm:w-auto"
     >
       Post comment
     </button>
