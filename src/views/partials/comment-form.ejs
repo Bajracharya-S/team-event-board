@@ -18,10 +18,10 @@
     hx-post="/events/<%= eventId %>/comments"
     hx-target="#comment-list"
     hx-swap="outerHTML"
-    class="m-0 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4 shadow-sm sm:p-5"
+    class="m-0 rounded-2xl border border-sky-200 dark:border-sky-900/70 bg-gradient-to-br from-white via-sky-50 to-teal-50 dark:from-slate-900 dark:via-sky-950/30 dark:to-teal-950/30 p-4 shadow-md shadow-sky-100/70 dark:shadow-black/30 sm:p-5"
   >
     <div class="mb-3">
-      <label for="comment-content" class="mb-1 block text-sm font-semibold text-slate-700 dark:text-slate-300">
+      <label for="comment-content" class="mb-1 block text-sm font-semibold text-sky-800 dark:text-sky-200">
         Leave a comment
       </label>
       <textarea
@@ -31,13 +31,13 @@
         rows="3"
         maxlength="500"
         placeholder="Ask a question or leave a note..."
-        class="w-full resize-none rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 px-4 py-3 text-sm leading-6 text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 shadow-inner focus:outline-none focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-700"
+        class="w-full resize-none rounded-xl border border-sky-200 dark:border-sky-800 bg-white dark:bg-slate-900 px-4 py-3 text-sm leading-6 text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 shadow-inner focus:outline-none focus:ring-2 focus:ring-sky-400 dark:focus:ring-sky-600"
       ></textarea>
       <div class="mt-2 flex items-center justify-between gap-3">
-        <p class="m-0 text-xs text-slate-400 dark:text-slate-500">Keep it helpful and on topic.</p>
+        <p class="m-0 text-xs text-teal-700 dark:text-teal-300">Keep it helpful and on topic.</p>
         <p
           class="m-0 shrink-0 text-xs font-medium"
-          x-bind:class="content.length > 450 ? 'text-amber-600 dark:text-amber-400' : 'text-slate-400 dark:text-slate-500'"
+          x-bind:class="content.length > 450 ? 'text-amber-600 dark:text-amber-400' : 'text-sky-600 dark:text-sky-300'"
         >
           <span x-text="content.length">0</span> / <span x-text="max">500</span>
         </p>
@@ -46,8 +46,8 @@
     <button
       type="submit"
       x-bind:disabled="content.trim().length === 0"
-      x-bind:class="content.trim().length === 0 ? 'cursor-not-allowed bg-slate-300 text-slate-500 dark:bg-slate-700 dark:text-slate-400' : 'cursor-pointer bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600'"
-      class="inline-flex w-full items-center justify-center rounded-xl px-4 py-2 text-sm font-semibold transition-colors sm:w-auto"
+      x-bind:class="content.trim().length === 0 ? 'cursor-not-allowed bg-slate-300 text-slate-500 dark:bg-slate-700 dark:text-slate-400' : 'cursor-pointer bg-gradient-to-r from-sky-600 to-teal-600 text-white shadow-md shadow-sky-200/70 hover:from-sky-700 hover:to-teal-700 dark:shadow-black/30'"
+      class="inline-flex w-full items-center justify-center rounded-xl px-4 py-2 text-sm font-semibold transition-all sm:w-auto"
     >
       Post comment
     </button>
