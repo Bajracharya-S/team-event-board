@@ -1,7 +1,7 @@
 <div id="archive-results">
   <% if (events.length === 0) { %>
-  <section class="p-10 border border-slate-200 dark:border-slate-700 rounded-2xl bg-white dark:bg-slate-900 shadow-sm text-center">
-    <p class="text-slate-400 dark:text-slate-500 text-lg m-0">
+  <section class="rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 bg-slate-50/80 dark:bg-slate-900/80 p-8 text-center shadow-sm sm:p-10">
+    <p class="m-0 text-base text-slate-400 dark:text-slate-500 sm:text-lg">
       <% if (selectedCategory) { %>
         No past events found in the <strong class="text-slate-600 dark:text-slate-300"><%= selectedCategory %></strong> category.
       <% } else { %>
@@ -10,29 +10,29 @@
     </p>
   </section>
   <% } else { %>
-  <ul class="space-y-3 list-none p-0 m-0">
+  <ul class="m-0 grid list-none grid-cols-1 gap-3 p-0 lg:grid-cols-2">
     <% events.forEach(function(event) { %>
-    <li class="p-5 border border-slate-200 dark:border-slate-700 rounded-2xl bg-white dark:bg-slate-900 shadow-sm opacity-80 hover:opacity-100 transition-opacity">
-      <div class="flex items-start justify-between gap-3 flex-wrap">
+    <li class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50/90 dark:bg-slate-900/90 p-5 shadow-sm grayscale-[15%] transition-all hover:-translate-y-0.5 hover:bg-white hover:grayscale-0 dark:hover:bg-slate-800">
+      <div class="flex h-full flex-col justify-between gap-4">
         <div>
-          <h2 class="text-lg font-semibold text-slate-700 dark:text-slate-200 mb-1"><%= event.title %></h2>
-          <p class="text-slate-500 dark:text-slate-400 text-sm m-0 mb-1"><%= event.description %></p>
-          <div class="flex items-center gap-3 flex-wrap mt-2">
-            <span class="text-xs px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 font-medium">
+          <div class="mb-3 flex items-start justify-between gap-3">
+            <h2 class="m-0 text-lg font-semibold text-slate-700 dark:text-slate-200"><%= event.title %></h2>
+            <span class="shrink-0 rounded-full bg-slate-200 dark:bg-slate-800 px-2.5 py-1 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+              Past
+            </span>
+          </div>
+          <p class="m-0 text-sm leading-6 text-slate-500 dark:text-slate-400"><%= event.description %></p>
+        </div>
+        <div class="flex flex-wrap items-center gap-2 border-t border-slate-200/80 dark:border-slate-700 pt-3">
+            <span class="rounded-full bg-white dark:bg-slate-800 px-2.5 py-1 text-xs font-medium text-slate-500 dark:text-slate-400 ring-1 ring-slate-200 dark:ring-slate-700">
               <%= event.category.charAt(0).toUpperCase() + event.category.slice(1) %>
             </span>
             <span class="text-xs text-slate-400 dark:text-slate-500">
               <%= event.location %>
             </span>
-          </div>
-        </div>
-        <div class="text-right shrink-0">
-          <span class="text-xs px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slateatel-400 font-semibold uppercase tracking-wide">
-            Past
-          </span>
-          <p class="text-xs text-slate-400 dark:text-slate-500 mt-1 mb-0">
+          <span class="text-xs text-slate-400 dark:text-slate-500 sm:ml-auto">
             Ended <%= new Date(event.endDatetime).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }) %>
-          </p>
+          </span>
         </div>
       </div>
     </li>

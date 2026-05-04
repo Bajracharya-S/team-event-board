@@ -1,55 +1,72 @@
-<section class="mb-5 p-6 border border-slate-200 dark:border-slate-700 rounded-2xl bg-gradient-to-b from-white to-slate-50 dark:from-slate-900 dark:to-slate-900 shadow-lg">
-  <div class="flex items-center justify-between flex-wrap gap-3">
+<section class="mb-5 overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-700 bg-gradient-to-br from-slate-100 via-white to-slate-50 dark:from-slate-900 dark:via-slate-900 dark:to-slate-800 shadow-lg">
+  <div class="flex flex-col gap-4 p-5 sm:p-6 md:flex-row md:items-center md:justify-between">
     <div>
-      <h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-1">Past events</h1>
-      <p class="text-slate-500 dark:text-slate-400 m-0">Browse events that have already taken place.</p>
+      <p class="mb-2 inline-flex items-center rounded-full border border-slate-300 dark:border-slate-700 bg-white/70 dark:bg-slate-950/50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+        Archive
+      </p>
+      <h1 class="mb-1 text-2xl font-bold text-slate-800 dark:text-slate-100 sm:text-3xl">Past events</h1>
+      <p class="m-0 max-w-2xl text-sm text-slate-500 dark:text-slate-400 sm:text-base">Browse completed events in a quieter view separate from the live event list.</p>
     </div>
-    <a href="/home" class="text-blue-600 dark:text-blue-400 font-semibold no-underline hover:underline text-sm">
+    <a href="/home" class="inline-flex w-fit items-center rounded-xl border border-slate-300 dark:border-slate-700 bg-white/80 dark:bg-slate-900 px-4 py-2 text-sm font-semibold text-slate-600 dark:text-slate-300 no-underline transition-colors hover:bg-slate-100 dark:hover:bg-slate-800">
       &larr; Back to events
     </a>
   </div>
 </section>
 
-<section class="mb-5 p-4 border border-slate-200 dark:border-slate-700 rounded-2xl bg-white dark:bg-slate-900 shadow-sm">
+<section
+  class="mb-5 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white/90 dark:bg-slate-900/90 p-4 shadow-sm sm:p-5"
+  x-data="{
+    category: '<%= selectedCategory || '' %>',
+    hasFilters() {
+      return this.category.length > 0;
+    },
+    clearFilters() {
+      this.category = '';
+      this.$nextTick(() => this.$refs.archiveFilterForm.requestSubmit());
+    }
+  }"
+>
   <form
+    x-ref="archiveFilterForm"
     method="GET"
     action="/archive"
     hx-get="/archive"
     hx-target="#archive-results"
     hx-swap="outerHTML"
     hx-trigger="change from:#category, submit"
-    class="flex items-center gap-3 flex-wrap m-0"
+    hx-push-url="true"
+    class="m-0 grid grid-cols-1 items-end gap-3 sm:grid-cols-[1fr_auto_auto]"
   >
-    <label for="category" class="text-sm font-medium text-slate-700 dark:text-slate-300">Filter by category:</label>
-    <select
-      id="category"
-      name="category"
-      class="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm text-slate-700 dark:text-slate-300"
-    >
-      <option value="" <%= selectedCategory === "" ? "selected" : "" %>>All categories</option>
-      <% validCategories.forEach(function(cat) { %>
-      <option value="<%= cat %>" <%= selectedCategory === cat ? "selected" : "" %>>
-        <%= cat.charAt(0).toUpperCase() + cat.slice(1) %>
-      </option>
-      <% }); %>
-    </select>
+    <div>
+      <label for="category" class="mb-1 block text-sm font-semibold text-slate-700 dark:text-slate-300">Category</label>
+      <select
+        x-model="category"
+        id="category"
+        name="category"
+        class="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 px-4 py-2 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-400 dark:focus:ring-slate-600 sm:min-w-56"
+      >
+        <option value="" <%= selectedCategory === "" ? "selected" : "" %>>All archived categories</option>
+        <% validCategories.forEach(function(cat) { %>
+        <option value="<%= cat %>" <%= selectedCategory === cat ? "selected" : "" %>>
+          <%= cat.charAt(0).toUpperCase() + cat.slice(1) %>
+        </option>
+        <% }); %>
+      </select>
+    </div>
     <button
       type="submit"
-      class="px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600 text-white text-sm font-medium cursor-pointer transition-colors"
+      class="rounded-xl bg-slate-700 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-slate-800 dark:bg-slate-200 dark:text-slate-900 dark:hover:bg-white"
     >
       Apply
     </button>
-    <% if (selectedCategory) { %>
-    
-      href="/archive"
-      hx-get="/archive"
-      hx-target="#archive-results"
-      hx-swap="outerHTML"
-      class="text-sm text-slate-500 dark:text-slate-400 hover:underline"
+    <button
+      x-show="hasFilters()"
+      x-on:click.prevent="clearFilters()"
+      type="button"
+      class="rounded-xl bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
     >
       Clear filter
-    </a>
-    <% } %>
+    </button>
   </form>
 </section>
 
