@@ -155,6 +155,27 @@ class PrismaEventRepository implements IEventRepository {
       return Err(UnexpectedError("Unable to update event status."));
     }
   }
+
+  async delete(id: string): Promise<Result<boolean, EventRepositoryError>> {
+    try {
+      const existing = await this.db.event.findUnique({ where: { id } });
+      if (!existing) return Ok(false);
+
+      // Foreign keys on Comment/Rsvp use ON DELETE RESTRICT, so we clean up
+      // related rows (and orphaned saves) inside a single transaction before
+      // removing the event itself.
+      await this.db.$transaction([
+        this.db.comment.deleteMany({ where: { eventId: id } }),
+        this.db.rsvp.deleteMany({ where: { eventId: id } }),
+        this.db.savedEvent.deleteMany({ where: { eventId: id } }),
+        this.db.event.delete({ where: { id } }),
+      ]);
+
+      return Ok(true);
+    } catch {
+      return Err(UnexpectedError("Unable to delete event."));
+    }
+  }
 }
 
 export function CreatePrismaEventRepository(db: PrismaClient): IEventRepository {

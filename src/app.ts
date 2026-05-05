@@ -5,6 +5,7 @@ import Layouts from "express-ejs-layouts";
 
 import { IAuthController } from "./auth/AuthController";
 import { IArchiveController } from "./archive/ArchiveController";
+import type { IArchiveService } from "./archive/ArchiveService";
 import { ICommentController } from "./comment/CommentController";
 import type { ICommentService } from "./comment/CommentService";
 import { IEventCreationController } from "./event-creation/EventCreationController";
@@ -50,6 +51,7 @@ class ExpressApp implements IApp {
   constructor(
     private readonly authController: IAuthController,
     private readonly archiveController: IArchiveController,
+    private readonly archiveService: IArchiveService,
     private readonly commentController: ICommentController,
     private readonly commentService: ICommentService,
     private readonly eventCreationController: IEventCreationController,
@@ -144,6 +146,24 @@ class ExpressApp implements IApp {
     });
 
     return false;
+  }
+
+  /** Published events whose end time is in the past become status "past" (archive). */
+  private async archiveExpiredPublishedEvents(
+    res: Response,
+  ): Promise<boolean> {
+    const archiveResult = await this.archiveService.archiveExpiredEvents(new Date());
+    if (!archiveResult.ok) {
+      const err = archiveResult.value;
+      const detail = "name" in err && "message" in err ? err.message : "Unknown error";
+      this.logger.error(`archiveExpiredEvents failed: ${detail}`);
+      res.status(500).render("partials/error", {
+        message: "Unexpected error while loading events.",
+        layout: false,
+      });
+      return false;
+    }
+    return true;
   }
 
   private registerRoutes(): void {
@@ -432,6 +452,10 @@ class ExpressApp implements IApp {
 
         this.logger.info(`GET /events for ${browserSession.browserLabel}`);
 
+        if (!(await this.archiveExpiredPublishedEvents(res))) {
+          return;
+        }
+
         await this.eventListController.listEvents(
           req,
           res,
@@ -455,6 +479,11 @@ class ExpressApp implements IApp {
         }
 
         const id = req.params.id as string;
+
+        if (!(await this.archiveExpiredPublishedEvents(res))) {
+          return;
+        }
+
         const result = await this.eventService.getEventById(id, {
           userId: currentUser.userId,
           role: currentUser.role,
@@ -556,6 +585,55 @@ class ExpressApp implements IApp {
     );
 
     this.app.post(
+      "/events/:id/delete",
+      asyncHandler(async (req, res) => {
+        if (
+          !this.requireRole(req, res, ["admin"], "Only Admin can delete events.")
+        ) {
+          return;
+        }
+
+        const currentUser = getAuthenticatedUser(sessionStore(req));
+
+        if (!currentUser) {
+          return;
+        }
+
+        const id = req.params.id as string;
+        const result = await this.eventService.deleteEvent(id, {
+          userId: currentUser.userId,
+          role: currentUser.role,
+        });
+
+        if (result.ok === false) {
+          const error = result.value as EventError;
+          const status =
+            error.kind === "EventNotFound"
+              ? 404
+              : error.kind === "Forbidden"
+                ? 403
+                : 500;
+
+          res.status(status).render("partials/error", {
+            message: error.message,
+            layout: false,
+          });
+          return;
+        }
+
+        this.logger.info(`Deleted event ${id} by admin ${currentUser.userId}`);
+
+        if (this.isHtmxRequest(req)) {
+          res.set("HX-Redirect", "/events");
+          res.status(200).send("");
+          return;
+        }
+
+        res.redirect("/events");
+      }),
+    );
+
+    this.app.post(
       "/events/:id/cancel",
       asyncHandler(async (req, res) => {
         if (!this.requireAuthenticated(req, res)) {
@@ -625,6 +703,7 @@ class ExpressApp implements IApp {
 export function CreateApp(
   authController: IAuthController,
   archiveController: IArchiveController,
+  archiveService: IArchiveService,
   commentController: ICommentController,
   commentService: ICommentService,
   eventCreationController: IEventCreationController,
@@ -640,6 +719,7 @@ export function CreateApp(
   return new ExpressApp(
     authController,
     archiveController,
+    archiveService,
     commentController,
     commentService,
     eventCreationController,
