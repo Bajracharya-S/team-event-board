@@ -70,14 +70,14 @@ describe("POST /events", () => {
     staffCookie = await loginAs(app, "staff@app.test", "password123");
   });
 
-  it("creates event and redirects on valid input", async () => {
+  it("creates event and redirects to events list on valid input", async () => {
     const res = await request(app)
       .post("/events")
       .send(new URLSearchParams(validEvent).toString())
       .set("Content-Type", "application/x-www-form-urlencoded")
       .set("Cookie", staffCookie);
     expect(res.status).toBe(302);
-    expect(res.headers.location).toBe("/home");
+    expect(res.headers.location).toBe("/events");
   });
 
   it("returns 400 with ValidationError for missing title", async () => {
@@ -162,7 +162,7 @@ describe("POST /events", () => {
       .set("Content-Type", "application/x-www-form-urlencoded")
       .set("Cookie", staffCookie);
     expect(res.status).toBe(302);
-    expect(res.headers.location).toBe("/home");
+    expect(res.headers.location).toBe("/events");
   });
 
   it("returns 400 with InvalidTimeRangeError when start equals end", async () => {
