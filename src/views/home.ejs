@@ -1,64 +1,197 @@
-<section class="mb-5 p-6 border border-slate-200 dark:border-slate-700 rounded-2xl bg-gradient-to-b from-white to-slate-50 dark:from-slate-900 dark:to-slate-900 shadow-lg">
-  <h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-3">Welcome to Project Starter</h1>
-  <p class="text-slate-500 dark:text-slate-400">
-    You are signed in and ready to build. This placeholder page is where your
-    project's main content will go.
-  </p>
-  <% if (session.authenticatedUser) { %>
-  <p class="text-slate-500 dark:text-slate-400 mt-2 mb-0">
-    Signed in as <strong class="text-slate-700 dark:text-slate-200"><%= session.authenticatedUser.displayName %></strong>
-    (<%= session.authenticatedUser.email %>, role:
-    <strong class="text-slate-700 dark:text-slate-200"><%= session.authenticatedUser.role %></strong>).
-  </p>
-  <% } %>
+<%
+  const user = session.authenticatedUser;
+  const isOrganizer = user && (user.role === "admin" || user.role === "staff");
+%>
+
+<section class="mb-5 overflow-hidden border border-cyan-100 dark:border-cyan-900/60 rounded-2xl bg-gradient-to-br from-white via-cyan-50 to-emerald-50 dark:from-slate-900 dark:via-cyan-950/30 dark:to-emerald-950/20 shadow-lg">
+  <div class="grid grid-cols-1 lg:grid-cols-[1.15fr_0.85fr]">
+    <div class="p-6 sm:p-8 border-l-4 border-cyan-400 dark:border-cyan-500">
+      <div class="inline-flex items-center gap-2 rounded-full bg-white/80 dark:bg-slate-900/80 px-3 py-1 text-xs font-semibold text-cyan-700 dark:text-cyan-300 mb-5 shadow-sm ring-1 ring-cyan-100 dark:ring-cyan-900/70">
+        <span class="h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_0_4px_rgba(16,185,129,0.16)]"></span>
+        <%= user.role.charAt(0).toUpperCase() + user.role.slice(1) %> workspace
+      </div>
+
+      <h1 class="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white mb-3">
+        Welcome back, <%= user.displayName %>.
+      </h1>
+      <p class="max-w-2xl text-slate-500 dark:text-slate-400 leading-relaxed mb-6">
+        Keep the team calendar moving with upcoming events, saved plans, organizer tools, and the archive all in one place.
+      </p>
+
+      <div class="flex flex-wrap gap-3">
+        <a href="/events" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-700 dark:bg-cyan-500 dark:hover:bg-cyan-400 text-white dark:text-slate-950 font-semibold no-underline shadow-sm shadow-cyan-200 dark:shadow-none transition-colors">
+          <svg viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4">
+            <path d="M17 12h-5v5h5v-5zM16 1v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5c0-1.1-.89-2-2-2h-1V1h-2zm3 18H5V8h14v11z"/>
+          </svg>
+          Browse events
+        </a>
+        <% if (isOrganizer) { %>
+        <a href="/events/new" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-200 font-semibold no-underline hover:bg-emerald-100 dark:hover:bg-emerald-900/60 transition-colors">
+          <svg viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/>
+          </svg>
+          Create event
+        </a>
+        <% } else { %>
+        <a href="/profile/saved" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/50 text-amber-800 dark:text-amber-200 font-semibold no-underline hover:bg-amber-100 dark:hover:bg-amber-900/60 transition-colors">
+          <svg viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4">
+            <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+          </svg>
+          Saved events
+        </a>
+        <% } %>
+      </div>
+    </div>
+
+    <div class="border-t lg:border-t-0 lg:border-l border-cyan-100 dark:border-cyan-900/60 bg-white/70 dark:bg-slate-950/60 p-6 sm:p-8">
+      <form
+        method="GET"
+        action="/events"
+        class="mb-5"
+      >
+        <label for="home-query" class="block text-sm font-semibold text-cyan-800 dark:text-cyan-200 mb-2">Find an event</label>
+        <div class="flex gap-2">
+          <input
+            id="home-query"
+            type="text"
+            name="query"
+            maxlength="100"
+            placeholder="Search by topic or location"
+            class="min-w-0 flex-1 rounded-xl border border-cyan-200 dark:border-cyan-800 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-cyan-500 dark:focus:ring-cyan-600"
+          />
+          <button type="submit" class="inline-flex items-center justify-center h-10 w-10 rounded-xl bg-rose-500 text-white hover:bg-rose-600 dark:bg-rose-400 dark:text-slate-950 dark:hover:bg-rose-300 transition-colors shadow-sm shadow-rose-200 dark:shadow-none" title="Search events">
+            <svg viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4">
+              <path d="M9.5 3a6.5 6.5 0 0 1 5.2 10.4l5.45 5.45-1.4 1.4-5.45-5.45A6.5 6.5 0 1 1 9.5 3zm0 2a4.5 4.5 0 1 0 0 9 4.5 4.5 0 0 0 0-9z"/>
+            </svg>
+          </button>
+        </div>
+      </form>
+
+      <div class="grid grid-cols-2 gap-3">
+        <a href="/events?timeframe=week" class="rounded-2xl border border-emerald-200 dark:border-emerald-900 bg-emerald-50 dark:bg-emerald-950/40 p-4 no-underline hover:border-emerald-400 dark:hover:border-emerald-600 transition-colors">
+          <span class="block text-2xl font-bold text-emerald-800 dark:text-emerald-200">7d</span>
+          <span class="text-sm text-emerald-700/80 dark:text-emerald-300/80">This week</span>
+        </a>
+        <a href="/events?timeframe=weekend" class="rounded-2xl border border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/40 p-4 no-underline hover:border-amber-400 dark:hover:border-amber-600 transition-colors">
+          <span class="block text-2xl font-bold text-amber-800 dark:text-amber-200">Sat</span>
+          <span class="text-sm text-amber-700/80 dark:text-amber-300/80">Weekend</span>
+        </a>
+      </div>
+    </div>
+  </div>
 </section>
 
 <% if (pageError) { %>
 <%- include("partials/error", { message: pageError }) %>
 <% } %>
 
-<section class="max-w-3xl p-6 border border-slate-200 dark:border-slate-700 rounded-2xl bg-white dark:bg-slate-900 shadow-lg">
-  <div class="mb-4">
-    <h2 class="text-xl font-semibold text-slate-900 dark:text-white mb-2">Getting started</h2>
-    <p class="text-slate-500 dark:text-slate-400">
-      This starter application provides authentication and role-based authorization
-      out of the box. Here are some ideas for where to begin:
-    </p>
-  </div>
-  <ul class="list-disc pl-5 space-y-2 text-slate-700 dark:text-slate-300">
-    <li>Replace this page with your project's main dashboard or landing page.</li>
-    <li>Add new routes in <code class="bg-slate-100 dark:bg-slate-800 dark:text-slate-300 px-1 rounded text-sm">src/app.ts</code> and protect them with
-      <code class="bg-slate-100 dark:bg-slate-800 dark:text-slate-300 px-1 rounded text-sm">requireAuthenticated</code> or <code class="bg-slate-100 dark:bg-slate-800 dark:text-slate-300 px-1 rounded text-sm">requireRole</code>.</li>
-    <li>Create new EJS views in <code class="bg-slate-100 dark:bg-slate-800 dark:text-slate-300 px-1 rounded text-sm">src/views/</code>.</li>
-    <li>Add your own models, services, and controllers under <code class="bg-slate-100 dark:bg-slate-800 dark:text-slate-300 px-1 rounded text-sm">src/</code>.</li>
-    <li>Use the Prisma schema in <code class="bg-slate-100 dark:bg-slate-800 dark:text-slate-300 px-1 rounded text-sm">prisma/schema.prisma</code> to define your database tables.</li>
-  </ul>
-</section>
+<section
+  class="grid grid-cols-1 lg:grid-cols-[0.85fr_1.15fr] gap-5"
+  x-data="{ focus: '<%= isOrganizer ? "organize" : "attend" %>' }"
+>
+  <div class="p-5 border border-rose-100 dark:border-rose-900/60 rounded-2xl bg-white dark:bg-slate-900 shadow-sm">
+    <h2 class="text-xl font-semibold text-slate-900 dark:text-white mb-1"><span class="text-rose-600 dark:text-rose-300">Quick</span> actions</h2>
+    <p class="text-sm text-slate-500 dark:text-slate-400 mb-4">Jump into the work that matters for your role.</p>
 
-<section class="max-w-3xl mt-5 p-6 border border-slate-200 dark:border-slate-700 rounded-2xl bg-white dark:bg-slate-900 shadow-lg" x-data="{ open: false }">
-  <button
-    @click="open = !open"
-    class="w-full flex items-center justify-between text-left bg-transparent border-0 p-0 cursor-pointer"
-  >
-    <h2 class="text-xl font-semibold text-slate-900 dark:text-white">Alpine.js demo</h2>
-    <span class="text-slate-400 dark:text-slate-500 text-sm" x-text="open ? 'Hide' : 'Show'">Show</span>
-  </button>
-  <div x-show="open" x-transition class="mt-4">
-    <p class="text-slate-500 dark:text-slate-400 mb-3">
-      Alpine.js is included via CDN and ready to use. This collapsible section is
-      a quick demonstration. Use <code class="bg-slate-100 dark:bg-slate-800 dark:text-slate-300 px-1 rounded text-sm">x-data</code>,
-      <code class="bg-slate-100 dark:bg-slate-800 dark:text-slate-300 px-1 rounded text-sm">x-show</code>,
-      <code class="bg-slate-100 dark:bg-slate-800 dark:text-slate-300 px-1 rounded text-sm">@click</code>, and other
-      Alpine directives directly in your EJS templates.
-    </p>
-    <div x-data="{ count: 0 }" class="flex items-center gap-3">
-      <button
-        @click="count++"
-        class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600 text-white font-medium cursor-pointer text-sm transition-colors"
-      >
-        Clicked: <span x-text="count">0</span>
-      </button>
-      <span class="text-sm text-slate-500 dark:text-slate-400">A simple Alpine.js counter</span>
+    <div class="space-y-3">
+      <a href="/events" class="flex items-center justify-between gap-3 rounded-xl border border-cyan-200 dark:border-cyan-900 bg-cyan-50 dark:bg-cyan-950/30 p-4 no-underline hover:border-cyan-400 dark:hover:border-cyan-600 transition-colors">
+        <span>
+          <span class="block font-semibold text-cyan-900 dark:text-cyan-100">Explore events</span>
+          <span class="text-sm text-slate-500 dark:text-slate-400">Filter by category, date, and location.</span>
+        </span>
+        <svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5 text-cyan-500">
+          <path d="M12 4l1.41 1.41L8.83 10H20v2H8.83l4.58 4.59L12 18l-7-7 7-7z" transform="rotate(180 12 11)"/>
+        </svg>
+      </a>
+
+      <% if (isOrganizer) { %>
+      <a href="/events/new" class="flex items-center justify-between gap-3 rounded-xl border border-emerald-200 dark:border-emerald-900 bg-emerald-50 dark:bg-emerald-950/30 p-4 no-underline hover:border-emerald-400 dark:hover:border-emerald-600 transition-colors">
+        <span>
+          <span class="block font-semibold text-emerald-900 dark:text-emerald-100">Draft a new event</span>
+          <span class="text-sm text-slate-500 dark:text-slate-400">Create, publish, and manage attendance.</span>
+        </span>
+        <svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5 text-emerald-500">
+          <path d="M12 4l1.41 1.41L8.83 10H20v2H8.83l4.58 4.59L12 18l-7-7 7-7z" transform="rotate(180 12 11)"/>
+        </svg>
+      </a>
+      <% } else { %>
+      <a href="/profile/saved" class="flex items-center justify-between gap-3 rounded-xl border border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/30 p-4 no-underline hover:border-amber-400 dark:hover:border-amber-600 transition-colors">
+        <span>
+          <span class="block font-semibold text-amber-900 dark:text-amber-100">Review saved events</span>
+          <span class="text-sm text-slate-500 dark:text-slate-400">Return to plans you marked for later.</span>
+        </span>
+        <svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5 text-amber-500">
+          <path d="M12 4l1.41 1.41L8.83 10H20v2H8.83l4.58 4.59L12 18l-7-7 7-7z" transform="rotate(180 12 11)"/>
+        </svg>
+      </a>
+      <% } %>
+
+      <a href="/archive" class="flex items-center justify-between gap-3 rounded-xl border border-rose-200 dark:border-rose-900 bg-rose-50 dark:bg-rose-950/30 p-4 no-underline hover:border-rose-400 dark:hover:border-rose-600 transition-colors">
+        <span>
+          <span class="block font-semibold text-rose-900 dark:text-rose-100">Open archive</span>
+          <span class="text-sm text-slate-500 dark:text-slate-400">Look back at completed and cancelled events.</span>
+        </span>
+        <svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5 text-rose-500">
+          <path d="M12 4l1.41 1.41L8.83 10H20v2H8.83l4.58 4.59L12 18l-7-7 7-7z" transform="rotate(180 12 11)"/>
+        </svg>
+      </a>
+    </div>
+  </div>
+
+  <div class="p-5 border border-emerald-100 dark:border-emerald-900/60 rounded-2xl bg-white dark:bg-slate-900 shadow-sm">
+    <div class="flex items-center justify-between gap-3 flex-wrap mb-5">
+      <div>
+        <h2 class="text-xl font-semibold text-slate-900 dark:text-white mb-1">Event board <span class="text-emerald-600 dark:text-emerald-300">flow</span></h2>
+        <p class="text-sm text-slate-500 dark:text-slate-400 m-0">Choose a focus to see the next best path.</p>
+      </div>
+      <div class="inline-flex rounded-xl border border-cyan-200 dark:border-cyan-900 bg-cyan-50 dark:bg-cyan-950/30 p-1">
+        <button
+          type="button"
+          @click="focus = 'attend'"
+          :class="focus === 'attend' ? 'bg-white dark:bg-slate-900 text-cyan-700 dark:text-cyan-300 shadow-sm' : 'text-slate-500 dark:text-slate-400'"
+          class="px-3 py-1.5 rounded-lg text-sm font-semibold transition-colors"
+        >
+          Attend
+        </button>
+        <button
+          type="button"
+          @click="focus = 'organize'"
+          :class="focus === 'organize' ? 'bg-white dark:bg-slate-900 text-emerald-700 dark:text-emerald-300 shadow-sm' : 'text-slate-500 dark:text-slate-400'"
+          class="px-3 py-1.5 rounded-lg text-sm font-semibold transition-colors"
+        >
+          Organize
+        </button>
+      </div>
+    </div>
+
+    <div x-show="focus === 'attend'" x-transition class="grid grid-cols-1 md:grid-cols-3 gap-3">
+      <a href="/events" class="rounded-2xl border border-cyan-200 dark:border-cyan-900 bg-cyan-50 dark:bg-cyan-950/30 p-4 no-underline">
+        <span class="block text-sm font-semibold text-cyan-900 dark:text-cyan-100 mb-1">Discover</span>
+        <span class="text-sm text-slate-500 dark:text-slate-400">Search published upcoming events.</span>
+      </a>
+      <a href="/events?timeframe=week" class="rounded-2xl border border-emerald-200 dark:border-emerald-900 bg-emerald-50 dark:bg-emerald-950/30 p-4 no-underline">
+        <span class="block text-sm font-semibold text-emerald-900 dark:text-emerald-100 mb-1">RSVP</span>
+        <span class="text-sm text-slate-500 dark:text-slate-400">Reserve your spot from an event detail page.</span>
+      </a>
+      <a href="/profile/saved" class="rounded-2xl border border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/30 p-4 no-underline <%= isOrganizer ? 'opacity-60 pointer-events-none' : '' %>">
+        <span class="block text-sm font-semibold text-amber-900 dark:text-amber-100 mb-1">Save</span>
+        <span class="text-sm text-slate-500 dark:text-slate-400">Keep interesting events close.</span>
+      </a>
+    </div>
+
+    <div x-show="focus === 'organize'" x-transition class="grid grid-cols-1 md:grid-cols-3 gap-3">
+      <a href="<%= isOrganizer ? '/events/new' : '/events' %>" class="rounded-2xl border border-emerald-200 dark:border-emerald-900 bg-emerald-50 dark:bg-emerald-950/30 p-4 no-underline">
+        <span class="block text-sm font-semibold text-emerald-900 dark:text-emerald-100 mb-1">Create</span>
+        <span class="text-sm text-slate-500 dark:text-slate-400">Build a draft with the event form.</span>
+      </a>
+      <a href="/events" class="rounded-2xl border border-cyan-200 dark:border-cyan-900 bg-cyan-50 dark:bg-cyan-950/30 p-4 no-underline">
+        <span class="block text-sm font-semibold text-cyan-900 dark:text-cyan-100 mb-1">Publish</span>
+        <span class="text-sm text-slate-500 dark:text-slate-400">Move ready drafts onto the board.</span>
+      </a>
+      <a href="/archive" class="rounded-2xl border border-rose-200 dark:border-rose-900 bg-rose-50 dark:bg-rose-950/30 p-4 no-underline">
+        <span class="block text-sm font-semibold text-rose-900 dark:text-rose-100 mb-1">Review</span>
+        <span class="text-sm text-slate-500 dark:text-slate-400">Track outcomes and past activity.</span>
+      </a>
     </div>
   </div>
 </section>
