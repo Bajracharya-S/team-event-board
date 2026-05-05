@@ -1,90 +1,135 @@
-<h1><%= event.title %></h1>
-<p><strong>Status:</strong> <span id="event-status-badge-<%= event.id %>"><%= event.status %></span></p>
-<p><strong>Category:</strong> <%= event.category %></p>
-<p><strong>Location:</strong> <%= event.location %></p>
-<p><strong>Description:</strong> <%= event.description %></p>
-<p><strong>Start:</strong> <%= event.startDatetime.toLocaleString() %></p>
-<p><strong>End:</strong> <%= event.endDatetime.toLocaleString() %></p>
-<p><strong>Organizer:</strong> <%= organizerName %></p>
-<p><strong>Attending:</strong> 0 / <%= event.capacity ?? 'Unlimited' %></p>
+<div class="max-w-3xl mx-auto px-4 py-8">
 
-<% if (currentUser.role === 'admin' || event.organizerId === currentUser.userId) { %>
-  <div id="event-controls-<%= event.id %>">
-    <% if (event.status === 'draft') { %>
-      <form
-        hx-post="/events/<%= event.id %>/publish"
-        hx-target="#event-controls-<%= event.id %>"
-        hx-swap="outerHTML"
-      >
-        <button type="submit">Publish Event</button>
-      </form>
-    <% } %>
-    <% if (event.status === 'published') { %>
-      <form
-        hx-post="/events/<%= event.id %>/cancel"
-        hx-target="#event-controls-<%= event.id %>"
-        hx-swap="outerHTML"
-      >
-        <button type="submit">Cancel Event</button>
-      </form>
+  <%# Event Header Card %>
+  <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm p-6 mb-6">
+    <div class="flex items-start justify-between gap-4 flex-wrap mb-4">
+      <h1 class="text-2xl font-bold text-slate-900 dark:text-slate-100"><%= event.title %></h1>
 
-<div id="attendee-list">
-  <button
-    hx-get="/events/<%= event.id %>/attendees/partial"
-    hx-target="#attendee-list"
-    hx-swap="outerHTML"
-    class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium cursor-pointer transition-all duration-150 bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
-  >
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4">
-      <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
-    </svg>
-    View Attendees
-  </button>
-</div>
-    <% } %>
+      <span
+        id="event-status-badge-<%= event.id %>"
+        x-data="{ animate: false }"
+        x-on:htmx:after-swap.window="animate = true; setTimeout(() => animate = false, 600)"
+        x-bind:class="animate ? 'scale-110' : 'scale-100'"
+        class="inline-block transition-transform duration-300 px-3 py-1 rounded-full text-sm font-semibold
+          <%= event.status === 'published' ? 'bg-green-100 text-green-700' :
+          event.status === 'draft' ? 'bg-yellow-100 text-yellow-700' :
+          event.status === 'cancelled' ? 'bg-red-100 text-red-700' :
+          'bg-slate-100 text-slate-600' %>"
+      >
+        <%= event.status.charAt(0).toUpperCase() + event.status.slice(1) %>
+      </span>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm text-slate-600 dark:text-slate-400">
+      <div><span class="font-medium text-slate-800 dark:text-slate-200">Category:</span> <%= event.category %></div>
+      <div><span class="font-medium text-slate-800 dark:text-slate-200">Location:</span> <%= event.location %></div>
+      <div><span class="font-medium text-slate-800 dark:text-slate-200">Organizer:</span> <%= organizerName %></div>
+      <div><span class="font-medium text-slate-800 dark:text-slate-200">Attending:</span> 0 / <%= event.capacity ?? 'Unlimited' %></div>
+      <div
+        x-data="{ label: '' }"
+        x-init="
+          const diff = Math.round((new Date('<%= event.startDatetime.toISOString() %>') - new Date()) / 86400000);
+          if (diff === 0) label = 'today';
+          else if (diff === 1) label = 'tomorrow';
+          else if (diff === -1) label = 'yesterday';
+          else if (diff > 1) label = 'in ' + diff + ' days';
+          else label = Math.abs(diff) + ' days ago';
+        "
+      >
+        <span class="font-medium text-slate-800 dark:text-slate-200">Start:</span>
+        <%= event.startDatetime.toLocaleString() %>
+        <span x-text="'(' + label + ')'" class="text-slate-400 text-xs ml-1"></span>
+      </div>
+      <div><span class="font-medium text-slate-800 dark:text-slate-200">End:</span> <%= event.endDatetime.toLocaleString() %></div>
+    </div>
+
+    <p class="mt-4 text-slate-700 dark:text-slate-300 leading-relaxed"><%= event.description %></p>
   </div>
-<% } else { %>
-  <div class="flex gap-2">
-  <button class="px-4 py-2 rounded-lg bg-blue-600 text-white font-medium cursor-pointer hover:bg-blue-700 text-sm">RSVP</button>
-  
+
+  <%# Error message %>
+  <% if (pageError) { %>
+    <div class="mb-4 px-4 py-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
+      <%= pageError %>
+    </div>
+  <% } %>
+
+  <%# Controls %>
+  <% if (currentUser.role === 'admin' || event.organizerId === currentUser.userId) { %>
+    <div id="event-controls-<%= event.id %>" class="mb-6">
+      <% if (event.status === 'draft') { %>
+        <form
+          hx-post="/events/<%= event.id %>/publish"
+          hx-target="#event-controls-<%= event.id %>"
+          hx-swap="outerHTML"
+        >
+          <button type="submit" class="px-5 py-2 rounded-lg bg-green-600 text-white font-medium hover:bg-green-700 transition-colors text-sm cursor-pointer">
+            Publish Event
+          </button>
+        </form>
+      <% } %>
+      <% if (event.status === 'published') { %>
+        <div class="flex gap-3 flex-wrap">
+          <form
+            hx-post="/events/<%= event.id %>/cancel"
+            hx-target="#event-controls-<%= event.id %>"
+            hx-swap="outerHTML"
+          >
+            <button type="submit" class="px-5 py-2 rounded-lg bg-red-600 text-white font-medium hover:bg-red-700 transition-colors text-sm cursor-pointer">
+              Cancel Event
+            </button>
+          </form>
+          <div id="attendee-list">
+            <button
+              hx-get="/events/<%= event.id %>/attendees/partial"
+              hx-target="#attendee-list"
+              hx-swap="outerHTML"
+              class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium cursor-pointer transition-all duration-150 bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
+            >
+              View Attendees
+            </button>
+          </div>
+        </div>
+      <% } %>
+    </div>
+  <% } else { %>
+    <div class="flex gap-2 mb-6">
+      <button class="px-4 py-2 rounded-lg bg-blue-600 text-white font-medium cursor-pointer hover:bg-blue-700 text-sm">RSVP</button>
+      <% if (event.status === 'published') { %>
+        <div id="save-btn-<%= event.id %>">
+          <%- include('saveButton', {
+            eventId: event.id,
+            isSaved: savedEventIds.includes(event.id)
+          }) %>
+        </div>
+      <% } %>
+    </div>
+  <% } %>
+
+  <%# Comments %>
   <% if (event.status === 'published') { %>
+    <hr class="my-6 border-slate-200" />
+    <section class="max-w-3xl">
+      <div class="mb-4">
+        <h2 class="mb-1 text-xl font-semibold text-slate-900 dark:text-slate-100">Comments</h2>
+        <p class="m-0 text-sm text-slate-500 dark:text-slate-400">Questions, updates, and notes from the event community.</p>
+      </div>
+      <div id="comment-errors" class="mb-3"></div>
+      <%- include("partials/comment-form", { eventId: event.id }) %>
+      <div class="mt-4" id="comments-section">
+        <%- include("partials/comment-list", {
+          comments,
+          currentUserId: currentUser.userId,
+          currentUserRole: currentUser.role,
+          eventOrganizerId: event.organizerId,
+        }) %>
+      </div>
+    </section>
+  <% } else { %>
+    <hr class="my-6 border-slate-200" />
+    <section class="max-w-3xl rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-5 shadow-sm">
+      <h2 class="mb-2 text-xl font-semibold text-slate-900 dark:text-slate-100">Comments</h2>
+      <p class="m-0 text-sm text-slate-500 dark:text-slate-400">Comments are only available for published events.</p>
+    </section>
+  <% } %>
 
-  <div id="save-btn-<%= event.id %>">
-    <%- include('saveButton', { 
-      eventId: event.id, 
-      isSaved: savedEventIds.includes(event.id) 
-    }) %>
-  </div>
-<% } %>
 </div>
-<% } %>
-
-<% if (pageError) { %>
-  <p style="color: red;"><%= pageError %></p>
-<% } %>
-
-<% if (event.status === 'published') { %>
-  <hr class="my-6 border-slate-200" />
-  <section class="max-w-3xl">
-    <div class="mb-4">
-      <h2 class="mb-1 text-xl font-semibold text-slate-900 dark:text-slate-100">Comments</h2>
-      <p class="m-0 text-sm text-slate-500 dark:text-slate-400">Questions, updates, and notes from the event community.</p>
-    </div>
-    <div id="comment-errors" class="mb-3"></div>
-    <%- include("partials/comment-form", { eventId: event.id }) %>
-    <div class="mt-4" id="comments-section">
-      <%- include("partials/comment-list", {
-        comments,
-        currentUserId: currentUser.userId,
-        currentUserRole: currentUser.role,
-        eventOrganizerId: event.organizerId,
-      }) %>
-    </div>
-  </section>
-<% } else { %>
-  <hr class="my-6 border-slate-200" />
-  <section class="max-w-3xl rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-5 shadow-sm">
-    <h2 class="mb-2 text-xl font-semibold text-slate-900 dark:text-slate-100">Comments</h2>
-    <p class="m-0 text-sm text-slate-500 dark:text-slate-400">Comments are only available for published events.</p>
-  </section>
-<% } %>
