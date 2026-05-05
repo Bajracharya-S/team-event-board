@@ -14,6 +14,7 @@ export interface IEventService {
   getEventById(eventId: string, actor: ActingUser): Promise<Result<IEvent, EventError>>;
   publishEvent(eventId: string, actor: ActingUser): Promise<Result<IEvent, EventError>>;
   cancelEvent(eventId: string, actor: ActingUser): Promise<Result<IEvent, EventError>>;
+  deleteEvent(eventId: string, actor: ActingUser): Promise<Result<IEvent, EventError>>;
 }
 
 class EventService implements IEventService {
@@ -76,6 +77,24 @@ class EventService implements IEventService {
     if (!updated.value) return Err(UnexpectedEventError("Event not found during update."));
     return Ok(updated.value);
 }
+
+  async deleteEvent(eventId: string, actor: ActingUser): Promise<Result<IEvent, EventError>> {
+    if (actor.role !== "admin") {
+      return Err(ForbiddenError());
+    }
+
+    const result = await this.eventRepository.findById(eventId);
+    if (!result.ok) return Err(UnexpectedEventError("An unexpected error occurred."));
+
+    const event = result.value;
+    if (!event) return Err(EventNotFoundError());
+
+    const deleted = await this.eventRepository.delete(eventId);
+    if (!deleted.ok) return Err(UnexpectedEventError("An unexpected error occurred."));
+    if (!deleted.value) return Err(EventNotFoundError());
+
+    return Ok(event);
+  }
 }
 
 export function CreateEventService(eventRepository: IEventRepository): IEventService {

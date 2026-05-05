@@ -89,6 +89,7 @@ export function createComposedApp(logger?: ILoggingService): IApp {
   return CreateApp(
     authController,
     archiveController,
+    archiveService,
     commentController,
     commentService,
     eventCreationController,

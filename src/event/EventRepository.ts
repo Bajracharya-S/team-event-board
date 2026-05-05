@@ -17,5 +17,6 @@ export interface IEventRepository {
   findPublishedUpcoming(query: EventListQuery): Promise<Result<IEvent[], EventRepositoryError>>;
   create(event: IEvent): Promise<Result<IEvent, EventRepositoryError>>;
   updateStatus(id: string, status: EventStatus): Promise<Result<IEvent | null, EventRepositoryError>>;
+  delete(id: string): Promise<Result<boolean, EventRepositoryError>>;
   generateEventId(): Promise<string>;
 }

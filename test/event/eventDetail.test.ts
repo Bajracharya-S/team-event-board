@@ -52,6 +52,16 @@ describe("GET /events/:id", () => {
     expect(res.text).toContain("Team Kickoff 2024");
   });
 
+  it("archives an expired published event when loading its detail page", async () => {
+    const cookie = await loginAs(app, "staff@app.test", "password123");
+    const res = await request(app)
+      .get("/events/event-1")
+      .set("Cookie", cookie);
+    expect(res.status).toBe(200);
+    const row = await prisma.event.findUnique({ where: { id: "event-1" } });
+    expect(row?.status).toBe("past");
+  });
+
   it("returns 404 for a non-existent event", async () => {
     const cookie = await loginAs(app, "staff@app.test", "password123");
     const res = await request(app)
@@ -137,6 +147,69 @@ describe("POST /events/:id/publish", () => {
       .post("/events/non-existent-id/publish")
       .set("Cookie", staffCookie);
     expect(res.status).toBe(404);
+  });
+});
+
+describe("POST /events/:id/delete", () => {
+  let app: Application;
+
+  beforeEach(async () => {
+    await seedDatabase();
+    app = createComposedApp().getExpressApp();
+  });
+
+  it("deletes the event as admin, redirects to /events, and removes related comments, RSVPs, and saves", async () => {
+    await prisma.comment.create({
+      data: {
+        id: "comment-del-1",
+        eventId: "event-4",
+        authorId: "user-reader",
+        authorDisplayName: "Una User",
+        content: "looking forward to it!",
+      },
+    });
+    await prisma.rsvp.create({
+      data: {
+        id: "rsvp-del-1",
+        eventId: "event-4",
+        userId: "user-reader",
+        status: "going",
+      },
+    });
+    await prisma.savedEvent.create({
+      data: {
+        userId: "user-reader",
+        eventId: "event-4",
+      },
+    });
+
+    const adminCookie = await loginAs(app, "admin@app.test", "password123");
+    const res = await request(app)
+      .post("/events/event-4/delete")
+      .set("Cookie", adminCookie);
+    expect(res.status).toBe(302);
+    expect(res.headers.location).toBe("/events");
+
+    const event = await prisma.event.findUnique({ where: { id: "event-4" } });
+    const comments = await prisma.comment.findMany({ where: { eventId: "event-4" } });
+    const rsvps = await prisma.rsvp.findMany({ where: { eventId: "event-4" } });
+    const saves = await prisma.savedEvent.findMany({ where: { eventId: "event-4" } });
+
+    expect(event).toBeNull();
+    expect(comments).toHaveLength(0);
+    expect(rsvps).toHaveLength(0);
+    expect(saves).toHaveLength(0);
+  });
+
+  it("returns 403 for non-admin roles and leaves the event in place", async () => {
+    const staffCookie = await loginAs(app, "staff@app.test", "password123");
+    const res = await request(app)
+      .post("/events/event-4/delete")
+      .set("Cookie", staffCookie);
+    expect(res.status).toBe(403);
+
+    const event = await prisma.event.findUnique({ where: { id: "event-4" } });
+    expect(event).not.toBeNull();
   });
 });
 

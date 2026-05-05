@@ -158,6 +158,14 @@ class InMemoryEventRepository implements IEventRepository {
       return Err(UnexpectedError("Unable to update event status."));
     }
   }
+
+  async delete(id: string): Promise<Result<boolean, EventRepositoryError>> {
+    try {
+      return Ok(this.events.delete(id));
+    } catch {
+      return Err(UnexpectedError("Unable to delete event."));
+    }
+  }
 }
 
 export function CreateInMemoryEventRepository(): IEventRepository {
