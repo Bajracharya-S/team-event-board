@@ -1,11 +1,15 @@
 <section class="mb-5 p-6 border border-slate-200 dark:border-slate-700 rounded-2xl bg-gradient-to-b from-white to-slate-50 dark:from-slate-900 dark:to-slate-900 shadow-lg">
   <div class="flex items-start justify-between gap-3 flex-wrap">
     <div>
-      <h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-1">Events</h1>
-      <p class="text-slate-500 dark:text-slate-400 m-0">Search and filter published upcoming events.</p>
+      <p class="text-sm font-semibold uppercase tracking-wide text-blue-600 dark:text-blue-400 mb-2">Local Event Board</p>
+      <h1 class="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white mb-2">Events</h1>
+      <p class="text-slate-500 dark:text-slate-400 m-0 max-w-2xl">
+        Search by keyword or filter published upcoming events by category and date.
+      </p>
     </div>
+
     <% if (currentUser.role === 'admin' || currentUser.role === 'staff') { %>
-    <a href="/events/new" class="text-blue-600 dark:text-blue-400 font-semibold no-underline hover:underline text-sm">
+    <a href="/events/new" class="inline-flex items-center justify-center px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600 text-white font-semibold no-underline text-sm transition-colors">
       + Create event
     </a>
     <% } %>
@@ -33,14 +37,16 @@
     x-ref="filterForm"
     method="GET"
     action="/events"
-    class="grid grid-cols-1 md:grid-cols-[1fr_auto_auto_auto] gap-3 items-end"
+    class="grid grid-cols-1 lg:grid-cols-[1fr_auto_auto_auto] gap-3 items-end"
     hx-get="/events"
     hx-target="#event-list"
     hx-swap="innerHTML"
     hx-push-url="true"
   >
     <div class="relative">
-      <label for="query" class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Search</label>
+      <label for="query" class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">
+        Search events
+      </label>
       <input
         x-model="query"
         hx-trigger="keyup changed delay:400ms"
@@ -54,22 +60,26 @@
       />
       <button
         x-show="query.length > 0"
+        x-cloak
         x-on:click.prevent="query = ''; $nextTick(() => $refs.filterForm.requestSubmit())"
         type="button"
-        class="absolute right-3 bottom-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+        aria-label="Clear search"
+        class="absolute right-3 bottom-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xl leading-none"
       >
         ×
       </button>
     </div>
 
     <div>
-      <label for="category" class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Category</label>
+      <label for="category" class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">
+        Category
+      </label>
       <select
         x-model="category"
         hx-trigger="change"
         id="category"
         name="category"
-        class="rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-700"
+        class="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-700"
       >
         <option value="">All categories</option>
         <option value="social">Social</option>
@@ -81,13 +91,15 @@
     </div>
 
     <div>
-      <label for="timeframe" class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Timeframe</label>
+      <label for="timeframe" class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">
+        Timeframe
+      </label>
       <select
         x-model="timeframe"
         hx-trigger="change"
         id="timeframe"
         name="timeframe"
-        class="rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-700"
+        class="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-700"
       >
         <option value="all">All upcoming</option>
         <option value="week">This week</option>
@@ -102,8 +114,10 @@
       >
         Apply
       </button>
+
       <button
         x-show="hasFilters()"
+        x-cloak
         x-on:click.prevent="clearFilters()"
         type="button"
         class="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
@@ -115,5 +129,5 @@
 </section>
 
 <section id="event-list">
-  <%- include("list", { events, filters, currentUser }) %>
+  <%- include("list", { events, filters, currentUser, savedEventIds }) %>
 </section>
