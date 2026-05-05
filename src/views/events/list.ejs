@@ -36,9 +36,13 @@
       </div>
 
       <div class="text-right shrink-0">
+        <% if (currentUser.role === 'admin' || currentUser.role === 'staff') { %>
+          <%- include('../partials/event-publication-toggle', { event, currentUser }) %>
+        <% } else { %>
         <span class="text-xs px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wide">
           <%= event.status %>
         </span>
+        <% } %>
         <% if (savedEventIds.includes(event.id)) { %>
         <span class="inline-flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400 font-medium mt-2">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-3.5 h-3.5" fill="currentColor">

@@ -1,6 +1,20 @@
 import { Ok, Err, type Result } from "../lib/result";
 import type { IEvent, EventStatus } from "./Event";
-import type { IEventRepository, EventRepositoryError } from "./EventRepository";
+import type { EventListQuery, IEventRepository, EventRepositoryError } from "./EventRepository";
+
+function matchesListFilters(e: IEvent, query: EventListQuery, statuses: EventStatus[]): boolean {
+  if (!statuses.includes(e.status)) return false;
+  if (!query.startsAtOrAfter) return false;
+  if (e.startDatetime < query.startsAtOrAfter) return false;
+  if (query.startsBefore && e.startDatetime >= query.startsBefore) return false;
+  if (query.category && e.category !== query.category) return false;
+  const term = query.query?.trim().toLowerCase();
+  if (term) {
+    const hay = `${e.title} ${e.description} ${e.location}`.toLowerCase();
+    if (!hay.includes(term)) return false;
+  }
+  return true;
+}
 
 const UnexpectedError = (message: string): EventRepositoryError => ({
   name: "UnexpectedError",
@@ -130,6 +144,28 @@ class InMemoryEventRepository implements IEventRepository {
       return Ok(matches);
     } catch {
       return Err(UnexpectedError("Unable to retrieve events by status."));
+    }
+  }
+
+  async findPublishedUpcoming(query: EventListQuery): Promise<Result<IEvent[], EventRepositoryError>> {
+    try {
+      const matches = [...this.events.values()]
+        .filter((e) => matchesListFilters(e, query, ["published"]))
+        .sort((a, b) => a.startDatetime.getTime() - b.startDatetime.getTime());
+      return Ok(matches);
+    } catch {
+      return Err(UnexpectedError("Unable to retrieve published upcoming events."));
+    }
+  }
+
+  async findStaffVisibleUpcoming(query: EventListQuery): Promise<Result<IEvent[], EventRepositoryError>> {
+    try {
+      const matches = [...this.events.values()]
+        .filter((e) => matchesListFilters(e, query, ["draft", "published"]))
+        .sort((a, b) => a.startDatetime.getTime() - b.startDatetime.getTime());
+      return Ok(matches);
+    } catch {
+      return Err(UnexpectedError("Unable to retrieve staff-visible upcoming events."));
     }
   }
 

@@ -115,6 +115,41 @@ class PrismaEventRepository implements IEventRepository {
     }
   }
 
+  async findStaffVisibleUpcoming(
+    query: EventListQuery,
+  ): Promise<Result<IEvent[], EventRepositoryError>> {
+    try {
+      const searchTerm = query.query?.trim();
+
+      const rows = await this.db.event.findMany({
+        where: {
+          status: { in: ["draft", "published"] },
+          startDatetime: {
+            gte: query.startsAtOrAfter,
+            ...(query.startsBefore ? { lt: query.startsBefore } : {}),
+          },
+          ...(query.category ? { category: query.category } : {}),
+          ...(searchTerm
+            ? {
+                OR: [
+                  { title: { contains: searchTerm } },
+                  { description: { contains: searchTerm } },
+                  { location: { contains: searchTerm } },
+                ],
+              }
+            : {}),
+        },
+        orderBy: {
+          startDatetime: "asc",
+        },
+      });
+
+      return Ok(rows.map(toIEvent));
+    } catch {
+      return Err(UnexpectedError("Unable to retrieve staff-visible upcoming events."));
+    }
+  }
+
   async create(event: IEvent): Promise<Result<IEvent, EventRepositoryError>> {
     try {
       const row = await this.db.event.create({
@@ -161,9 +196,7 @@ class PrismaEventRepository implements IEventRepository {
       const existing = await this.db.event.findUnique({ where: { id } });
       if (!existing) return Ok(false);
 
-      // Foreign keys on Comment/Rsvp use ON DELETE RESTRICT, so we clean up
-      // related rows (and orphaned saves) inside a single transaction before
-      // removing the event itself.
+  
       await this.db.$transaction([
         this.db.comment.deleteMany({ where: { eventId: id } }),
         this.db.rsvp.deleteMany({ where: { eventId: id } }),
