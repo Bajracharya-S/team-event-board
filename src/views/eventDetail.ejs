@@ -1,13 +1,35 @@
-<h1><%= event.title %></h1>
-<p><strong>Status:</strong> <span id="event-status-badge-<%= event.id %>"><%= event.status %></span></p>
-<p><strong>Category:</strong> <%= event.category %></p>
-<p><strong>Location:</strong> <%= event.location %></p>
-<p><strong>Description:</strong> <%= event.description %></p>
-<p><strong>Start:</strong> <%= event.startDatetime.toLocaleString() %></p>
-<p><strong>End:</strong> <%= event.endDatetime.toLocaleString() %></p>
-<p><strong>Organizer:</strong> <%= organizerName %></p>
-<p><strong>Attending:</strong> 0 / <%= event.capacity ?? 'Unlimited' %></p>
+<div class="max-w-3xl mx-auto px-4 py-8">
 
+  <%# Event Header Card %>
+  <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm p-6 mb-6">
+    <div class="flex items-start justify-between gap-4 flex-wrap mb-4">
+      <h1 class="text-2xl font-bold text-slate-900 dark:text-slate-100"><%= event.title %></h1>
+
+      <%# Status Badge %>
+      <span
+        id="event-status-badge-<%= event.id %>"
+        class="inline-block px-3 py-1 rounded-full text-sm font-semibold
+          <%= event.status === 'published' ? 'bg-green-100 text-green-700' :
+              event.status === 'draft' ? 'bg-yellow-100 text-yellow-700' :
+              event.status === 'cancelled' ? 'bg-red-100 text-red-700' :
+              'bg-slate-100 text-slate-600' %>"
+      >
+        <%= event.status.charAt(0).toUpperCase() + event.status.slice(1) %>
+      </span>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm text-slate-600 dark:text-slate-400">
+      <div><span class="font-medium text-slate-800 dark:text-slate-200">Category:</span> <%= event.category %></div>
+      <div><span class="font-medium text-slate-800 dark:text-slate-200">Location:</span> <%= event.location %></div>
+      <div><span class="font-medium text-slate-800 dark:text-slate-200">Organizer:</span> <%= organizerName %></div>
+      <div><span class="font-medium text-slate-800 dark:text-slate-200">Attending:</span> 0 / <%= event.capacity ?? 'Unlimited' %></div>
+      <div><span class="font-medium text-slate-800 dark:text-slate-200">Start:</span> <%= event.startDatetime.toLocaleString() %></div>
+      <div><span class="font-medium text-slate-800 dark:text-slate-200">End:</span> <%= event.endDatetime.toLocaleString() %></div>
+    </div>
+
+    <p class="mt-4 text-slate-700 dark:text-slate-300 leading-relaxed"><%= event.description %></p>
+  </div>
+  
 <% if (currentUser.role === 'admin' || event.organizerId === currentUser.userId) { %>
   <div id="event-controls-<%= event.id %>">
     <% if (event.status === 'draft') { %>
