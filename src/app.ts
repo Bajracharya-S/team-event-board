@@ -428,9 +428,19 @@ class ExpressApp implements IApp {
         const browserSession = recordPageView(sessionStore(req));
         this.logger.info(`GET /home for ${browserSession.browserLabel}`);
 
+        const now = new Date();
+        const calendarEnd = new Date(now);
+        calendarEnd.setDate(now.getDate() + 45);
+
+        const upcomingEventsResult = await this.eventRepository.findPublishedUpcoming({
+          startsAtOrAfter: now,
+          startsBefore: calendarEnd,
+        });
+
         res.render("home", {
           session: browserSession,
           pageError: null,
+          upcomingEvents: upcomingEventsResult.ok ? upcomingEventsResult.value : [],
         });
       }),
     );

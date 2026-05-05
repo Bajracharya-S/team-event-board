@@ -196,7 +196,9 @@ class PrismaEventRepository implements IEventRepository {
       const existing = await this.db.event.findUnique({ where: { id } });
       if (!existing) return Ok(false);
 
-  
+      // Foreign keys on Comment/Rsvp use ON DELETE RESTRICT, so we clean up
+      // related rows (and orphaned saves) inside a single transaction before
+      // removing the event itself.
       await this.db.$transaction([
         this.db.comment.deleteMany({ where: { eventId: id } }),
         this.db.rsvp.deleteMany({ where: { eventId: id } }),
