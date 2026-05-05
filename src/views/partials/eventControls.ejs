@@ -1,21 +1,25 @@
-<div id="event-controls-<%= event.id %>">
-    <% if (event.status === 'draft') { %>
-      <form
-        hx-post="/events/<%= event.id %>/publish"
-        hx-target="#event-controls-<%= event.id %>"
-        hx-swap="outerHTML"
-      >
-        <button type="submit">Publish Event</button>
-      </form>
-    <% } else if (event.status === 'published') { %>
-      <form
-        hx-post="/events/<%= event.id %>/cancel"
-        hx-target="#event-controls-<%= event.id %>"
-        hx-swap="outerHTML"
-      >
-        <button type="submit">Cancel Event</button>
-      </form>
-    <% } else { %>
-      <p>This event has been <%= event.status %>.</p>
-    <% } %>
-  </div>
+<div id="event-controls-<%= event.id %>" class="mb-6">
+  <% if (event.status === 'draft') { %>
+    <form
+      hx-post="/events/<%= event.id %>/publish"
+      hx-target="#event-controls-<%= event.id %>"
+      hx-swap="outerHTML"
+    >
+      <button type="submit" class="px-5 py-2 rounded-lg bg-green-600 text-white font-medium hover:bg-green-700 transition-colors text-sm cursor-pointer">
+        Publish Event
+      </button>
+    </form>
+  <% } else if (event.status === 'published') { %>
+    <form
+      hx-post="/events/<%= event.id %>/cancel"
+      hx-target="#event-controls-<%= event.id %>"
+      hx-swap="outerHTML"
+    >
+      <button type="submit" class="px-5 py-2 rounded-lg bg-red-600 text-white font-medium hover:bg-red-700 transition-colors text-sm cursor-pointer">
+        Cancel Event
+      </button>
+    </form>
+  <% } else { %>
+    <p class="text-slate-500 text-sm">This event has been <%= event.status %>.</p>
+  <% } %>
+</div>
