@@ -1,6 +1,7 @@
 import request from "supertest";
 import { createComposedApp } from "../../src/composition";
 import type { Application } from "express";
+import { prisma } from "../../src/lib/prisma";
 
 async function loginAs(
   app: Application,
@@ -125,5 +126,21 @@ describe("Feature 6 and Feature 10: event list filters and search", () => {
 
     expect(res.status).toBe(302);
     expect(res.headers.location).toBe("/login");
+  });
+
+  it("archives published events whose end time has passed before listing", async () => {
+    await request(app).get("/events").set("Cookie", userCookie);
+
+    const e1 = await prisma.event.findUnique({ where: { id: "event-1" } });
+    const e2 = await prisma.event.findUnique({ where: { id: "event-2" } });
+    const e3 = await prisma.event.findUnique({ where: { id: "event-3" } });
+    const e4 = await prisma.event.findUnique({ where: { id: "event-4" } });
+    const e5 = await prisma.event.findUnique({ where: { id: "event-5" } });
+
+    expect(e1?.status).toBe("past");
+    expect(e2?.status).toBe("past");
+    expect(e3?.status).toBe("past");
+    expect(e4?.status).toBe("published");
+    expect(e5?.status).toBe("draft");
   });
 });
