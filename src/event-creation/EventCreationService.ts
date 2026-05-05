@@ -84,7 +84,7 @@ class EventCreationService implements IEventCreationService {
       description: input.description.trim(),
       location: input.location.trim(),
       category: input.category.trim(),
-      status: "draft",
+      status: "published",
       capacity: input.capacity,
       startDatetime: input.startTime,
       endDatetime: input.endTime,
