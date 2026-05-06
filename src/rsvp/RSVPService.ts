@@ -31,7 +31,7 @@ class RSVPService implements IRSVPService {
     userRole: string,
   ): Promise<Result<RSVPResult, RSVPError>> {
     if (userRole === "admin" || userRole === "staff") {
-      return Err(UnauthorizedError("Organizers and admins cannot RSVP to events."));
+      return Err(UnauthorizedError("Staff and admins cannot RSVP to events."));
     }
 
     const eventResult = await this.eventRepo.findById(eventId);

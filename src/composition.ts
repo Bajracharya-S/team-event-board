@@ -101,5 +101,6 @@ export function createComposedApp(logger?: ILoggingService): IApp {
     eventRepo,
     authUsers,
     eventListController,
+    rsvpRepo,
   );
 }
