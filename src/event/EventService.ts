@@ -4,6 +4,7 @@ import type { IEvent } from "./Event";
 import type { EventError } from "./errors";
 import { EventNotFoundError, ForbiddenError, InvalidTransitionError, UnexpectedEventError } from "./errors";
 import type { UserRole } from "../auth/User";
+import type { ISaveService } from "../saveForLater/SaveService";
 
 export interface ActingUser {
   userId: string;
@@ -19,7 +20,10 @@ export interface IEventService {
 }
 
 class EventService implements IEventService {
-  constructor(private readonly eventRepository: IEventRepository) {}
+  constructor(
+    private readonly eventRepository: IEventRepository,
+    private readonly saveService?: ISaveService,
+  ) {}
 
   async getEventById(eventId: string, actor: ActingUser): Promise<Result<IEvent, EventError>> {
     const result = await this.eventRepository.findById(eventId);
@@ -80,6 +84,12 @@ class EventService implements IEventService {
     const updated = await this.eventRepository.updateStatus(eventId, "cancelled");
     if (!updated.ok) return Err(UnexpectedEventError("An unexpected error occurred."));
     if (!updated.value) return Err(UnexpectedEventError("Event not found during update."));
+    
+    // Remove from saved events when cancelled
+    if (this.saveService) {
+      await this.saveService.removeEventFromSavedEvents(eventId);
+    }
+    
     return Ok(updated.value);
 }
 
@@ -105,6 +115,12 @@ class EventService implements IEventService {
     const updated = await this.eventRepository.updateStatus(eventId, nextStatus);
     if (!updated.ok) return Err(UnexpectedEventError("An unexpected error occurred."));
     if (!updated.value) return Err(UnexpectedEventError("Event not found during update."));
+    
+    // Remove from saved events when unpublished (changing from published to draft)
+    if (nextStatus === "draft" && this.saveService) {
+      await this.saveService.removeEventFromSavedEvents(eventId);
+    }
+    
     return Ok(updated.value);
   }
 
@@ -127,6 +143,9 @@ class EventService implements IEventService {
   }
 }
 
-export function CreateEventService(eventRepository: IEventRepository): IEventService {
-  return new EventService(eventRepository);
+export function CreateEventService(
+  eventRepository: IEventRepository,
+  saveService?: ISaveService,
+): IEventService {
+  return new EventService(eventRepository, saveService);
 }
