@@ -25,8 +25,9 @@ describe("POST /events/:eventId/rsvp", () => {
       .post("/events/event-4/rsvp")
       .set("Cookie", userCookie);
     expect(res.status).toBe(200);
-    expect(res.text).toContain("Cancel RSVP");
-    expect(res.text).toContain("1 attending");
+    expect(res.text).toContain('aria-checked="true"');
+    expect(res.text).toContain("going");
+    expect(res.text).toContain("1 person attending");
   });
 
   it("toggles from going to cancelled on second click", async () => {
@@ -38,8 +39,8 @@ describe("POST /events/:eventId/rsvp", () => {
       .post("/events/event-4/rsvp")
       .set("Cookie", userCookie);
     expect(res.status).toBe(200);
-    expect(res.text).toContain("RSVP");
-    expect(res.text).toContain("0 attending");
+    expect(res.text).toContain("Not RSVPed");
+    expect(res.text).toContain("0 people attending");
   });
 
   it("reactivates a cancelled RSVP on third toggle", async () => {
@@ -54,8 +55,8 @@ describe("POST /events/:eventId/rsvp", () => {
       .post("/events/event-4/rsvp")
       .set("Cookie", userCookie);
     expect(res.status).toBe(200);
-    expect(res.text).toContain("Cancel RSVP");
-    expect(res.text).toContain("1 attending");
+    expect(res.text).toContain('aria-checked="true"');
+    expect(res.text).toContain("1 person attending");
   });
 
   it("returns 404 EventNotFoundError for non-existent event", async () => {
@@ -80,7 +81,7 @@ describe("POST /events/:eventId/rsvp", () => {
       .post("/events/event-4/rsvp")
       .set("Cookie", staffCookie);
     expect(res.status).toBe(403);
-    expect(res.text).toContain("Organizers and admins cannot RSVP");
+    expect(res.text).toContain("Staff and admins cannot RSVP");
   });
 
   it("returns 403 UnauthorizedError for admin", async () => {
@@ -89,7 +90,7 @@ describe("POST /events/:eventId/rsvp", () => {
       .post("/events/event-4/rsvp")
       .set("Cookie", adminCookie);
     expect(res.status).toBe(403);
-    expect(res.text).toContain("Organizers and admins cannot RSVP");
+    expect(res.text).toContain("Staff and admins cannot RSVP");
   });
 
   it("returns 400 EventClosedError for cancelled event", async () => {
@@ -121,7 +122,7 @@ describe("POST /events/:eventId/rsvp", () => {
       .post("/events/event-2/rsvp")
       .set("Cookie", userCookie);
     expect(res.status).toBe(200);
-    expect(res.text).toContain("0 attending");
+    expect(res.text).toContain("0 people attending");
   });
 
   it("returns HTMX partial without full page wrapper", async () => {

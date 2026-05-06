@@ -30,6 +30,7 @@ describe("AttendeeService", () => {
     expect(result.ok).toBe(false);
     if (!result.ok) {
       expect(result.value.name).toBe("Unauthorized");
+      expect(result.value.message).toMatch(/organizer|staff|admin/);
     }
   });
 
@@ -52,6 +53,17 @@ describe("AttendeeService", () => {
 
     // event-1 organizerId is "user-staff"
     const result = await service.getGroupedAttendees("event-1", "user-staff", "staff");
+
+    expect(result.ok).toBe(true);
+  });
+
+  it("allows staff to view attendees when they are not the event organizer", async () => {
+    const rsvpRepo = CreateInMemoryRSVPRepository();
+    const eventRepo = CreateInMemoryEventRepository();
+    const attendeeRepo = new InMemoryAttendeeRepository(rsvpRepo);
+    const service = CreateAttendeeService(attendeeRepo, eventRepo);
+
+    const result = await service.getGroupedAttendees("event-1", "user-not-organizer", "staff");
 
     expect(result.ok).toBe(true);
   });
