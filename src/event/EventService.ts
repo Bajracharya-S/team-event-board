@@ -15,6 +15,7 @@ export interface IEventService {
   publishEvent(eventId: string, actor: ActingUser): Promise<Result<IEvent, EventError>>;
   cancelEvent(eventId: string, actor: ActingUser): Promise<Result<IEvent, EventError>>;
   deleteEvent(eventId: string, actor: ActingUser): Promise<Result<IEvent, EventError>>;
+  toggleDraftPublishedVisibility(eventId: string, actor: ActingUser): Promise<Result<IEvent, EventError>>;
 }
 
 class EventService implements IEventService {
@@ -28,7 +29,11 @@ class EventService implements IEventService {
     if (!event) return Err(EventNotFoundError());
 
     if (event.status === "draft") {
-      if (actor.role !== "admin" && event.organizerId !== actor.userId) {
+      const canSeeDraft =
+        actor.role === "admin" ||
+        actor.role === "staff" ||
+        event.organizerId === actor.userId;
+      if (!canSeeDraft) {
         return Err(EventNotFoundError());
       }
     }
@@ -77,6 +82,31 @@ class EventService implements IEventService {
     if (!updated.value) return Err(UnexpectedEventError("Event not found during update."));
     return Ok(updated.value);
 }
+
+  async toggleDraftPublishedVisibility(
+    eventId: string,
+    actor: ActingUser,
+  ): Promise<Result<IEvent, EventError>> {
+    const result = await this.eventRepository.findById(eventId);
+    if (!result.ok) return Err(UnexpectedEventError("An unexpected error occurred."));
+
+    const event = result.value;
+    if (!event) return Err(EventNotFoundError());
+
+    if (actor.role !== "admin" && event.organizerId !== actor.userId) {
+      return Err(ForbiddenError());
+    }
+
+    if (event.status !== "draft" && event.status !== "published") {
+      return Err(InvalidTransitionError("Only draft or published events can be switched."));
+    }
+
+    const nextStatus = event.status === "draft" ? "published" : "draft";
+    const updated = await this.eventRepository.updateStatus(eventId, nextStatus);
+    if (!updated.ok) return Err(UnexpectedEventError("An unexpected error occurred."));
+    if (!updated.value) return Err(UnexpectedEventError("Event not found during update."));
+    return Ok(updated.value);
+  }
 
   async deleteEvent(eventId: string, actor: ActingUser): Promise<Result<IEvent, EventError>> {
     if (actor.role !== "admin") {

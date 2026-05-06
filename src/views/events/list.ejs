@@ -9,54 +9,60 @@
   <div class="mb-3 text-sm text-slate-500 dark:text-slate-400">
     Showing <strong class="text-slate-700 dark:text-slate-200"><%= events.length %></strong> result<%= events.length === 1 ? '' : 's' %>
   </div>
-  
+
   <ul class="grid grid-cols-1 md:grid-cols-2 gap-4 list-none p-0 m-0">
     <% events.forEach(function(event) { %>
     <li id="event-row-<%= event.id %>" class="p-5 border border-slate-200 dark:border-slate-700 rounded-2xl bg-white dark:bg-slate-900 shadow-sm hover:border-blue-300 dark:hover:border-blue-700 hover:shadow-md transition-all">
       <div class="flex flex-col gap-4 h-full">
-  
+
         <div>
-          <div class="flex items-center gap-2 flex-wrap mb-3">
-            <span class="text-xs px-2.5 py-1 rounded-full bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-400 font-semibold">
-              <%= event.category.charAt(0).toUpperCase() + event.category.slice(1) %>
-            </span>
-  
-            <span class="text-xs px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wide">
-              <%= event.status %>
-            </span>
-  
-            <% if (event.organizerId === currentUser.userId) { %>
-            <span class="text-xs px-2.5 py-1 rounded-full bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-400 font-semibold">
-              Yours
-            </span>
-            <% } %>
-  
-            <% if (savedEventIds && savedEventIds.includes(event.id)) { %>
-            <span class="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-400 font-semibold">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-3.5 h-3.5" fill="currentColor">
-                <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
-              </svg>
-              Saved
-            </span>
+          <div class="flex items-start justify-between gap-3 mb-3">
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="text-xs px-2.5 py-1 rounded-full bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-400 font-semibold">
+                <%= event.category.charAt(0).toUpperCase() + event.category.slice(1) %>
+              </span>
+
+              <% if (event.organizerId === currentUser.userId) { %>
+              <span class="text-xs px-2.5 py-1 rounded-full bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-400 font-semibold">
+                Yours
+              </span>
+              <% } %>
+
+              <% if (savedEventIds && savedEventIds.includes(event.id)) { %>
+              <span class="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-400 font-semibold">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-3.5 h-3.5" fill="currentColor">
+                  <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+                </svg>
+                Saved
+              </span>
+              <% } %>
+            </div>
+
+            <% if (currentUser.role === 'admin' || currentUser.role === 'staff') { %>
+              <%- include('../partials/event-publication-toggle', { event, currentUser }) %>
+            <% } else { %>
+              <span class="text-xs px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wide shrink-0">
+                <%= event.status %>
+              </span>
             <% } %>
           </div>
-  
+
           <h2 class="text-xl font-bold text-slate-900 dark:text-white mb-2">
             <a href="/events/<%= event.id %>" class="text-slate-900 dark:text-white no-underline hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
               <%= event.title %>
             </a>
           </h2>
-  
+
           <p class="text-slate-500 dark:text-slate-400 text-sm leading-relaxed m-0">
             <%= event.description %>
           </p>
         </div>
-  
+
         <div class="mt-auto pt-4 border-t border-slate-100 dark:border-slate-800">
           <p class="text-sm text-slate-600 dark:text-slate-300 font-medium mb-2">
             <%= event.location %>
           </p>
-  
+
           <p class="text-xs text-slate-400 dark:text-slate-500 m-0">
             <%= new Date(event.startDatetime).toLocaleString("en-US", {
               year: "numeric", month: "short", day: "numeric",
@@ -68,7 +74,7 @@
               hour: "2-digit", minute: "2-digit"
             }) %>
           </p>
-  
+
           <% if (currentUser.role === 'admin') { %>
           <div class="mt-3 flex justify-end">
             <button
@@ -86,7 +92,7 @@
           </div>
           <% } %>
         </div>
-  
+
       </div>
     </li>
     <% }) %>

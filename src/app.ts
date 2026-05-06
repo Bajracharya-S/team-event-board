@@ -595,6 +595,58 @@ class ExpressApp implements IApp {
     );
 
     this.app.post(
+      "/events/:id/toggle-visibility",
+      asyncHandler(async (req, res) => {
+        if (
+          !this.requireRole(req, res, ["admin", "staff"], "Only organizers can change event visibility.")
+        ) {
+          return;
+        }
+
+        const currentUser = getAuthenticatedUser(sessionStore(req));
+
+        if (!currentUser) {
+          return;
+        }
+
+        const id = req.params.id as string;
+        const result = await this.eventService.toggleDraftPublishedVisibility(id, {
+          userId: currentUser.userId,
+          role: currentUser.role,
+        });
+
+        if (result.ok === false) {
+          const error = result.value as EventError;
+          const status =
+            error.kind === "EventNotFound"
+              ? 404
+              : error.kind === "Forbidden"
+                ? 403
+                : error.kind === "InvalidTransition"
+                  ? 400
+                  : 500;
+
+          res.status(status).render("partials/error", {
+            message: error.message,
+            layout: false,
+          });
+          return;
+        }
+
+        if (this.isHtmxRequest(req)) {
+          res.render("partials/event-publication-toggle", {
+            event: result.value,
+            currentUser,
+            layout: false,
+          });
+          return;
+        }
+
+        res.redirect("/events");
+      }),
+    );
+
+    this.app.post(
       "/events/:id/delete",
       asyncHandler(async (req, res) => {
         if (
