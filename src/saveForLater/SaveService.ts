@@ -30,6 +30,7 @@ export interface SavedEventWithDetails {
 export interface ISaveService {
   toggleSaveEvent(userId: string, eventId: string): Promise<Result<ToggleOutcome, SavedEventError>>
   getSavedEvents(userId: string): Promise<SavedEventWithDetails[]>
+  removeEventFromSavedEvents(eventId: string): Promise<void>
 }
 
 export class SaveService implements ISaveService {
@@ -60,6 +61,10 @@ export class SaveService implements ISaveService {
         return { savedEvent, event }
       })
     )
+  }
+
+  async removeEventFromSavedEvents(eventId: string): Promise<void> {
+    await this.repo.deleteByEventId(eventId)
   }
 }
 
