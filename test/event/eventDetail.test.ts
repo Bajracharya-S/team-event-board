@@ -73,7 +73,7 @@ describe("GET /events/:id", () => {
   it("returns 200 for a published event viewed by a regular user", async () => {
     const cookie = await loginAs(app, "user@app.test", "password123");
     const res = await request(app)
-      .get("/events/event-1")
+      .get("/events/event-4")
       .set("Cookie", cookie);
     expect(res.status).toBe(200);
     expect(res.text).toContain("RSVP");

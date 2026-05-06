@@ -32,6 +32,8 @@ import type { IEventService } from "./event/EventService";
 import type { EventError } from "./event/errors";
 import type { IUserRepository } from "./auth/UserRepository";
 import type { IEventRepository } from "./event/EventRepository";
+import type { IRSVPRepository } from "./rsvp/RSVPRepository";
+import type { RSVPStatus } from "./rsvp/RSVP";
 
 type AsyncRequestHandler = RequestHandler;
 
@@ -63,6 +65,7 @@ class ExpressApp implements IApp {
     private readonly eventRepository: IEventRepository,
     private readonly userRepository: IUserRepository,
     private readonly eventListController: IEventListController,
+    private readonly rsvpRepository: IRSVPRepository,
   ) {
     this.app = express();
     this.registerMiddleware();
@@ -528,10 +531,22 @@ class ExpressApp implements IApp {
             ? organizerResult.value.displayName
             : "Unknown";
 
-        const savedEventIds =
-          currentUser.role === "user"
-            ? await this.saveController.getSavedEventIds(currentUser.userId)
-            : [];
+        const goingCountResult = await this.rsvpRepository.countByEventAndStatus(
+          event.id,
+          "going",
+        );
+        const goingCount = goingCountResult.ok ? goingCountResult.value : 0;
+
+        let userRsvpStatus: RSVPStatus = "cancelled";
+        if (currentUser.role === "user" && event.status === "published") {
+          const rsvpLookup = await this.rsvpRepository.findByEventAndUser(
+            event.id,
+            currentUser.userId,
+          );
+          if (rsvpLookup.ok && rsvpLookup.value) {
+            userRsvpStatus = rsvpLookup.value.status;
+          }
+        }
 
         res.render("eventDetail", {
           event,
@@ -540,7 +555,8 @@ class ExpressApp implements IApp {
           comments,
           pageError: null,
           session: browserSession,
-          savedEventIds,
+          goingCount,
+          userRsvpStatus,
         });
       }),
     );
@@ -777,6 +793,7 @@ export function CreateApp(
   eventRepository: IEventRepository,
   userRepository: IUserRepository,
   eventListController: IEventListController,
+  rsvpRepository: IRSVPRepository,
 ): IApp {
   return new ExpressApp(
     authController,
@@ -793,5 +810,6 @@ export function CreateApp(
     eventRepository,
     userRepository,
     eventListController,
+    rsvpRepository,
   );
 }
