@@ -161,7 +161,7 @@ class ExpressApp implements IApp {
       const detail = "name" in err && "message" in err ? err.message : "Unknown error";
       this.logger.error(`archiveExpiredEvents failed: ${detail}`);
       res.status(500).render("partials/error", {
-        message: "Unexpected error while loading events.",
+        message: "Unexpected error while loading events!!",
         layout: false,
       });
       return false;
