@@ -34,7 +34,7 @@ describe("GET /events/new", () => {
       .get("/events/new")
       .set("Cookie", cookie);
     expect(res.status).toBe(200);
-    expect(res.text).toContain("Create New Event");
+    expect(res.text).toContain("Create an event");
   });
 
   it("returns 200 and renders form for admin", async () => {
@@ -43,7 +43,7 @@ describe("GET /events/new", () => {
       .get("/events/new")
       .set("Cookie", cookie);
     expect(res.status).toBe(200);
-    expect(res.text).toContain("Create New Event");
+    expect(res.text).toContain("Create an event");
   });
 
   it("returns 403 for regular user", async () => {

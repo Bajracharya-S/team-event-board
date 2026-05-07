@@ -531,6 +531,11 @@ class ExpressApp implements IApp {
             ? organizerResult.value.displayName
             : "Unknown";
 
+        const savedEventIds =
+          currentUser.role === "user"
+            ? await this.saveController.getSavedEventIds(currentUser.userId)
+            : [];
+
         const goingCountResult = await this.rsvpRepository.countByEventAndStatus(
           event.id,
           "going",
@@ -539,12 +544,12 @@ class ExpressApp implements IApp {
 
         let userRsvpStatus: RSVPStatus = "cancelled";
         if (currentUser.role === "user" && event.status === "published") {
-          const rsvpLookup = await this.rsvpRepository.findByEventAndUser(
+          const rsvpRow = await this.rsvpRepository.findByEventAndUser(
             event.id,
             currentUser.userId,
           );
-          if (rsvpLookup.ok && rsvpLookup.value) {
-            userRsvpStatus = rsvpLookup.value.status;
+          if (rsvpRow.ok && rsvpRow.value) {
+            userRsvpStatus = rsvpRow.value.status;
           }
         }
 
@@ -555,6 +560,7 @@ class ExpressApp implements IApp {
           comments,
           pageError: null,
           session: browserSession,
+          savedEventIds,
           goingCount,
           userRsvpStatus,
         });

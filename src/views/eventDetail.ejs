@@ -75,8 +75,11 @@
     </div>
   <% } %>
 
-  <%# Controls %>
-  <% if (currentUser.role === 'admin' || event.organizerId === currentUser.userId) { %>
+  <% const canManageEvent = currentUser.role === 'admin' || event.organizerId === currentUser.userId %>
+  <% const canViewAttendees = canManageEvent || currentUser.role === 'staff' %>
+
+  <%# Organizer / owner controls %>
+  <% if (canManageEvent) { %>
     <div id="event-controls-<%= event.id %>" class="mb-6" data-status="<%= event.status %>">
       <% if (event.status === 'draft') { %>
         <form
@@ -107,19 +110,46 @@
               hx-swap="outerHTML"
               class="inline-flex items-center gap-2 rounded-xl border border-sky-200 dark:border-sky-800 bg-white/85 dark:bg-slate-900 px-4 py-2 text-sm font-semibold text-sky-700 dark:text-sky-300 cursor-pointer shadow-sm transition-colors hover:bg-sky-50 dark:hover:bg-sky-950"
             >
-              View Attendees
+              View RSVPs
             </button>
           </div>
         </div>
       <% } %>
     </div>
-  <% } else if (currentUser.role === 'user' && event.status === 'published') { %>
-    <div class="mb-6">
-      <%- include('rsvp/status', {
-        eventId: event.id,
-        status: typeof userRsvpStatus !== 'undefined' ? userRsvpStatus : 'cancelled',
-        attendeeCount: typeof goingCount !== 'undefined' ? goingCount : 0,
-      }) %>
+  <% } %>
+
+  <%# Staff (non-owner): view RSVPs only on published events %>
+  <% if (!canManageEvent && canViewAttendees && event.status === 'published') { %>
+    <div id="staff-attendee-panel" class="mb-6">
+      <div id="attendee-list">
+        <button
+          hx-get="/events/<%= event.id %>/attendees/partial"
+          hx-target="#attendee-list"
+          hx-swap="outerHTML"
+          class="inline-flex items-center gap-2 rounded-xl border border-sky-200 dark:border-sky-800 bg-white/85 dark:bg-slate-900 px-4 py-2 text-sm font-semibold text-sky-700 dark:text-sky-300 cursor-pointer shadow-sm transition-colors hover:bg-sky-50 dark:hover:bg-sky-950"
+        >
+          View RSVPs
+        </button>
+      </div>
+    </div>
+  <% } %>
+
+  <%# Members: RSVP + save %>
+  <% if (currentUser.role === 'user' && event.status === 'published') { %>
+    <div class="flex flex-col sm:flex-row sm:items-stretch gap-3 mb-6">
+      <div class="flex-1 min-w-0">
+        <%- include('rsvp/status', {
+          eventId: event.id,
+          status: typeof userRsvpStatus !== 'undefined' ? userRsvpStatus : 'cancelled',
+          attendeeCount: typeof goingCount !== 'undefined' ? goingCount : 0,
+        }) %>
+      </div>
+      <div id="save-btn-<%= event.id %>" class="shrink-0 flex items-center">
+        <%- include('saveButton', {
+          eventId: event.id,
+          isSaved: savedEventIds.includes(event.id)
+        }) %>
+      </div>
     </div>
   <% } %>
 
