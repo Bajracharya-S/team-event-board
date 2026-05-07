@@ -15,6 +15,8 @@ export interface IEventRepository {
   findById(id: string): Promise<Result<IEvent | null, EventRepositoryError>>;
   findByStatus(status: EventStatus): Promise<Result<IEvent[], EventRepositoryError>>;
   findPublishedUpcoming(query: EventListQuery): Promise<Result<IEvent[], EventRepositoryError>>;
+  /** Draft + published upcoming events (same date/search filters as published list). For admin/staff only. */
+  findStaffVisibleUpcoming(query: EventListQuery): Promise<Result<IEvent[], EventRepositoryError>>;
   create(event: IEvent): Promise<Result<IEvent, EventRepositoryError>>;
   updateStatus(id: string, status: EventStatus): Promise<Result<IEvent | null, EventRepositoryError>>;
   delete(id: string): Promise<Result<boolean, EventRepositoryError>>;

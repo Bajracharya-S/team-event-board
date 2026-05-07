@@ -32,6 +32,8 @@ import type { IEventService } from "./event/EventService";
 import type { EventError } from "./event/errors";
 import type { IUserRepository } from "./auth/UserRepository";
 import type { IEventRepository } from "./event/EventRepository";
+import type { IRSVPRepository } from "./rsvp/RSVPRepository";
+import type { RSVPStatus } from "./rsvp/RSVP";
 
 type AsyncRequestHandler = RequestHandler;
 
@@ -63,6 +65,7 @@ class ExpressApp implements IApp {
     private readonly eventRepository: IEventRepository,
     private readonly userRepository: IUserRepository,
     private readonly eventListController: IEventListController,
+    private readonly rsvpRepository: IRSVPRepository,
   ) {
     this.app = express();
     this.registerMiddleware();
@@ -158,7 +161,7 @@ class ExpressApp implements IApp {
       const detail = "name" in err && "message" in err ? err.message : "Unknown error";
       this.logger.error(`archiveExpiredEvents failed: ${detail}`);
       res.status(500).render("partials/error", {
-        message: "Unexpected error while loading events.",
+        message: "Unexpected error while loading events!!",
         layout: false,
       });
       return false;
@@ -533,6 +536,23 @@ class ExpressApp implements IApp {
             ? await this.saveController.getSavedEventIds(currentUser.userId)
             : [];
 
+        const goingCountResult = await this.rsvpRepository.countByEventAndStatus(
+          event.id,
+          "going",
+        );
+        const goingCount = goingCountResult.ok ? goingCountResult.value : 0;
+
+        let userRsvpStatus: RSVPStatus = "cancelled";
+        if (currentUser.role === "user" && event.status === "published") {
+          const rsvpRow = await this.rsvpRepository.findByEventAndUser(
+            event.id,
+            currentUser.userId,
+          );
+          if (rsvpRow.ok && rsvpRow.value) {
+            userRsvpStatus = rsvpRow.value.status;
+          }
+        }
+
         res.render("eventDetail", {
           event,
           currentUser,
@@ -541,6 +561,8 @@ class ExpressApp implements IApp {
           pageError: null,
           session: browserSession,
           savedEventIds,
+          goingCount,
+          userRsvpStatus,
         });
       }),
     );
@@ -591,6 +613,58 @@ class ExpressApp implements IApp {
         }
 
         res.redirect(`/events/${result.value.id}`);
+      }),
+    );
+
+    this.app.post(
+      "/events/:id/toggle-visibility",
+      asyncHandler(async (req, res) => {
+        if (
+          !this.requireRole(req, res, ["admin", "staff"], "Only organizers can change event visibility.")
+        ) {
+          return;
+        }
+
+        const currentUser = getAuthenticatedUser(sessionStore(req));
+
+        if (!currentUser) {
+          return;
+        }
+
+        const id = req.params.id as string;
+        const result = await this.eventService.toggleDraftPublishedVisibility(id, {
+          userId: currentUser.userId,
+          role: currentUser.role,
+        });
+
+        if (result.ok === false) {
+          const error = result.value as EventError;
+          const status =
+            error.kind === "EventNotFound"
+              ? 404
+              : error.kind === "Forbidden"
+                ? 403
+                : error.kind === "InvalidTransition"
+                  ? 400
+                  : 500;
+
+          res.status(status).render("partials/error", {
+            message: error.message,
+            layout: false,
+          });
+          return;
+        }
+
+        if (this.isHtmxRequest(req)) {
+          res.render("partials/event-publication-toggle", {
+            event: result.value,
+            currentUser,
+            layout: false,
+          });
+          return;
+        }
+
+        res.redirect("/events");
       }),
     );
 
@@ -725,6 +799,7 @@ export function CreateApp(
   eventRepository: IEventRepository,
   userRepository: IUserRepository,
   eventListController: IEventListController,
+  rsvpRepository: IRSVPRepository,
 ): IApp {
   return new ExpressApp(
     authController,
@@ -741,5 +816,6 @@ export function CreateApp(
     eventRepository,
     userRepository,
     eventListController,
+    rsvpRepository,
   );
 }

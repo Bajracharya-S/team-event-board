@@ -33,10 +33,14 @@ export class AttendeeService implements IAttendeeService {
 
     const event = eventResult.value
     const isAdmin = requesterRole === 'admin'
+    const isStaff = requesterRole === 'staff'
     const isOrganizer = event.organizerId === requesterId
 
-    if (!isAdmin && !isOrganizer) {
-      return Err({ name: 'Unauthorized', message: 'Only the organizer or an admin can view attendees.' } as const)
+    if (!isAdmin && !isStaff && !isOrganizer) {
+      return Err({
+        name: 'Unauthorized',
+        message: 'Only the organizer, staff, or an admin can view attendees.',
+      } as const)
     }
 
     const attendees: AttendeeEntry[] = await this.repo.findByEvent(eventId)

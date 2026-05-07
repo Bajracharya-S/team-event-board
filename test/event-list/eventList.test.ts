@@ -26,6 +26,17 @@ describe("Feature 6 and Feature 10: event list filters and search", () => {
     userCookie = await loginAs(app, "user@app.test", "password123");
   });
 
+  it("shows draft upcoming events to admin (staff-visible list)", async () => {
+    const adminCookie = await loginAs(app, "admin@app.test", "password123");
+    const res = await request(app)
+      .get("/events")
+      .set("Cookie", adminCookie);
+
+    expect(res.status).toBe(200);
+    expect(res.text).toContain("Game Night");
+    expect(res.text).toContain("Sprint Planning");
+  });
+
   it("shows published upcoming events by default", async () => {
     const res = await request(app)
       .get("/events")

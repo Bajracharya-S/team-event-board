@@ -34,7 +34,7 @@ class EventListController implements IEventListController {
       timeframe: typeof req.query.timeframe === "string" ? req.query.timeframe : "all",
     };
 
-    const result = await this.eventListService.listEvents(filters);
+    const result = await this.eventListService.listEvents(filters, currentUser.role);
 
     if (result.ok === false) {
       const error = result.value;

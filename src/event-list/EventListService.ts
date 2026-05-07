@@ -2,6 +2,7 @@ import { Ok, Err, type Result } from "../lib/result";
 import type { IEvent } from "../event/Event";
 import type { IEventRepository } from "../event/EventRepository";
 import { EVENT_CATEGORIES } from "../event/categories";
+import type { UserRole } from "../auth/User";
 
 export type EventListError =
   | { name: "InvalidFilterError"; message: string }
@@ -15,7 +16,7 @@ export interface EventFilters {
 }
 
 export interface IEventListService {
-  listEvents(filters: EventFilters): Promise<Result<IEvent[], EventListError>>;
+  listEvents(filters: EventFilters, viewerRole: UserRole): Promise<Result<IEvent[], EventListError>>;
 }
 
 const InvalidFilterError = (message: string): EventListError => ({
@@ -54,7 +55,7 @@ function getWeekendRange(now: Date): { startsAtOrAfter: Date; startsBefore: Date
 class EventListService implements IEventListService {
   constructor(private readonly eventRepo: IEventRepository) {}
 
-  async listEvents(filters: EventFilters): Promise<Result<IEvent[], EventListError>> {
+  async listEvents(filters: EventFilters, viewerRole: UserRole): Promise<Result<IEvent[], EventListError>> {
     const now = new Date();
 
     const query = filters.query?.trim() ?? "";
@@ -87,12 +88,17 @@ class EventListService implements IEventListService {
       startsBefore = weekendRange.startsBefore;
     }
 
-    const eventsResult = await this.eventRepo.findPublishedUpcoming({
+    const queryPayload = {
       query,
       category: category || undefined,
       startsAtOrAfter,
       startsBefore,
-    });
+    };
+
+    const eventsResult =
+      viewerRole === "admin" || viewerRole === "staff"
+        ? await this.eventRepo.findStaffVisibleUpcoming(queryPayload)
+        : await this.eventRepo.findPublishedUpcoming(queryPayload);
 
     if (!eventsResult.ok) {
       return Err(UnexpectedError("Unable to retrieve events."));

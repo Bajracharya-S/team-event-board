@@ -5,6 +5,7 @@ export interface ISavedEventRepository {
   findAllByUser(userId: string): Promise<SavedEvent[]>
   save(userId: string, eventId: string): Promise<SavedEvent>
   delete(userId: string, eventId: string): Promise<void>
+  deleteByEventId(eventId: string): Promise<void>
 }
 
 export class InMemorySavedEventRepository implements ISavedEventRepository {
@@ -32,5 +33,15 @@ export class InMemorySavedEventRepository implements ISavedEventRepository {
 
   async delete(userId: string, eventId: string): Promise<void> {
     this.store.delete(this.key(userId, eventId))
+  }
+
+  async deleteByEventId(eventId: string): Promise<void> {
+    const keysToDelete: string[] = []
+    for (const [key, savedEvent] of this.store.entries()) {
+      if (savedEvent.eventId === eventId) {
+        keysToDelete.push(key)
+      }
+    }
+    keysToDelete.forEach(key => this.store.delete(key))
   }
 }

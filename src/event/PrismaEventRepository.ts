@@ -115,6 +115,41 @@ class PrismaEventRepository implements IEventRepository {
     }
   }
 
+  async findStaffVisibleUpcoming(
+    query: EventListQuery,
+  ): Promise<Result<IEvent[], EventRepositoryError>> {
+    try {
+      const searchTerm = query.query?.trim();
+
+      const rows = await this.db.event.findMany({
+        where: {
+          status: { in: ["draft", "published"] },
+          startDatetime: {
+            gte: query.startsAtOrAfter,
+            ...(query.startsBefore ? { lt: query.startsBefore } : {}),
+          },
+          ...(query.category ? { category: query.category } : {}),
+          ...(searchTerm
+            ? {
+                OR: [
+                  { title: { contains: searchTerm } },
+                  { description: { contains: searchTerm } },
+                  { location: { contains: searchTerm } },
+                ],
+              }
+            : {}),
+        },
+        orderBy: {
+          startDatetime: "asc",
+        },
+      });
+
+      return Ok(rows.map(toIEvent));
+    } catch {
+      return Err(UnexpectedError("Unable to retrieve staff-visible upcoming events."));
+    }
+  }
+
   async create(event: IEvent): Promise<Result<IEvent, EventRepositoryError>> {
     try {
       const row = await this.db.event.create({

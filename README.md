@@ -211,7 +211,7 @@ Sessions track browser identity and authentication state. The `AppSession` modul
 
 The app runs over HTTPS even in development. Self-signed certificates in `certs/` are provided for convenience. In production, use real certificates.
 
-## Environment Variables
+## Environment Variables!
 
 | Variable             | Default                       | Description                |
 | -------------------- | ----------------------------- | -------------------------- |

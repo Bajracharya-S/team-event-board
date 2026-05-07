@@ -29,4 +29,10 @@ export class PrismaSavedEventRepository implements ISavedEventRepository {
       where: { userId_eventId: { userId, eventId } },
     })
   }
+
+  async deleteByEventId(eventId: string): Promise<void> {
+    await this.db.savedEvent.deleteMany({
+      where: { eventId },
+    })
+  }
 }

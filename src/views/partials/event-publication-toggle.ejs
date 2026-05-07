@@ -1,0 +1,25 @@
+<div id="publication-toggle-<%= event.id %>" class="flex flex-col items-end gap-1">
+  <% var showSwitch = event.status === 'draft' || event.status === 'published'; %>
+  <% if (showSwitch) { %>
+    <span class="text-[10px] uppercase tracking-wide text-slate-500 dark:text-slate-400 font-semibold">Visibility</span>
+    <button
+      type="button"
+      hx-post="/events/<%= event.id %>/toggle-visibility"
+      hx-target="#publication-toggle-<%= event.id %>"
+      hx-swap="outerHTML"
+      class="relative inline-flex h-8 w-14 shrink-0 cursor-pointer items-center rounded-full border p-0.5 transition-colors focus:outline-none focus:ring-2 focus:ring-teal-400 focus:ring-offset-2 dark:focus:ring-offset-slate-900 <%= event.status === 'published' ? 'border-teal-400 bg-teal-500/20 dark:border-teal-600' : 'border-amber-300 bg-amber-100 dark:border-amber-800 dark:bg-amber-950/50' %>"
+      role="switch"
+      aria-checked="<%= event.status === 'published' ? 'true' : 'false' %>"
+      aria-label="<%= event.status === 'published' ? 'Published — click to set as draft' : 'Draft — click to publish' %>"
+    >
+      <span class="pointer-events-none inline-block h-6 w-6 rounded-full bg-white shadow transition-transform duration-200 ease-out dark:bg-slate-100 <%= event.status === 'published' ? 'translate-x-6' : 'translate-x-0' %>"></span>
+    </button>
+    <span class="text-[11px] font-semibold <%= event.status === 'published' ? 'text-teal-700 dark:text-teal-300' : 'text-amber-700 dark:text-amber-300' %>">
+      <%= event.status === 'published' ? 'Published' : 'Draft' %>
+    </span>
+  <% } else { %>
+    <span class="text-xs px-2.5 py-1 rounded-full bg-sky-50 dark:bg-sky-950 text-sky-700 dark:text-sky-200 ring-1 ring-sky-200 dark:ring-sky-800 font-semibold uppercase tracking-wide">
+      <%= event.status %>
+    </span>
+  <% } %>
+</div>
